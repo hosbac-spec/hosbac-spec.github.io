@@ -1,0 +1,4337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HosBac - Plateforme éducative collaborative</title>
+    
+    <!-- SEO - Balises essentielles pour le référencement Google -->
+    <meta name="description" content="HosBac : la plateforme éducative pour le partage d'épreuves et de corrigés au Bénin. Entraide pour les élèves de la 6ème à la Terminale.">
+    <!-- GOOGLE SEARCH CONSOLE - Placeholder pour la vérification Google -->
+    <meta name="google-site-verification" content="D3FAMTyQftIDVckT295Xsr9W3I0u7iFbosC1a4ODnsU" />
+    
+    <!-- Balises PWA -->
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="HosBac">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Variables CSS */
+        :root {
+            --primary-blue: #1e3a8a;
+            --secondary-blue: #3b82f6;
+            --light-blue: #dbeafe;
+            --white: #ffffff;
+            --light-gray: #f8fafc;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --transition: all 0.3s ease;
+            --silver: linear-gradient(145deg, #e6e6e6, #ffffff);
+            --silver-dark: linear-gradient(145deg, #c0c0c0, #e6e6e6);
+        }
+
+        /* Reset et styles de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Styles pour l'écran de démarrage */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .splash-logo {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            animation: pulse 2s infinite;
+            font-style: italic;
+            display: flex;
+        }
+
+        .splash-logo .hos {
+            background: var(--silver);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+            animation: shimmer 3s infinite;
+        }
+
+        .splash-logo .bac {
+            color: #000;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+        }
+
+        .splash-icons {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 2.5rem;
+            animation: bounce 2s infinite;
+            color: var(--light-blue);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+
+        /* Styles pour l'avertissement */
+        #warning-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9998;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .warning-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.5s ease;
+        }
+
+        .warning-title {
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .warning-text {
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .accept-btn {
+            background: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .accept-btn:hover {
+            background: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+
+        /* Styles pour l'authentification */
+        #auth-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9997;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .auth-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--light-blue);
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-tab.active {
+            color: var(--primary-blue);
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .auth-form {
+            display: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--light-blue);
+            border-radius: 10px;
+            background: var(--light-gray);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .auth-btn {
+            width: 100%;
+            background: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .auth-btn:hover {
+            background: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--secondary-blue);
+            cursor: pointer;
+        }
+
+        /* Animations Tom et Jerry */
+        .tom-jerry-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: none;
+        }
+
+        .tom-jerry-animation.active {
+            display: block;
+        }
+
+        .character {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .jerry {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="brown"/><circle cx="35" cy="40" r="5" fill="black"/><circle cx="65" cy="40" r="5" fill="black"/><path d="M40,65 Q50,75 60,65" stroke="black" stroke-width="3" fill="none"/></svg>');
+            top: 20%;
+            left: -100px;
+        }
+
+        .tom {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="gray"/><circle cx="35" cy="40" r="5" fill="black"/><circle cx="65" cy="40" r="5" fill="black"/><path d="M40,65 Q50,75 60,65" stroke="black" stroke-width="3" fill="none"/></svg>');
+            top: 20%;
+            right: -100px;
+        }
+
+        .light-beam {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            transition: all 0.8s ease;
+            box-shadow: 0 0 50px 30px rgba(255, 255, 200, 0.7);
+            opacity: 0;
+        }
+
+        .light-beam.active {
+            width: 300px;
+            height: 300px;
+            opacity: 1;
+        }
+
+        /* Styles pour l'application principale */
+        #app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        /* En-tête (Style Facebook) */
+        header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.5rem 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header-left .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            cursor: pointer;
+        }
+        
+        .header-center {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .header-right {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        
+        .nav-icons {
+            display: flex;
+        }
+
+        /* Style pour les icônes centrales (style onglet) */
+        .header-center .nav-icon {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+        }
+        
+        .header-center .nav-icon.active {
+            color: var(--primary-blue);
+            background: var(--light-blue);
+            border-bottom: 3px solid var(--primary-blue);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .header-center .nav-icon:hover {
+            background: var(--light-blue);
+        }
+
+        /* Style pour les icônes de droite (style cercle) */
+        .header-right .nav-icon {
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.8rem;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background: var(--light-blue);
+            position: relative;
+        }
+
+        .header-right .nav-icon.active {
+            color: var(--white);
+            background: var(--primary-blue);
+        }
+
+        .header-right .nav-icon:hover {
+            background: var(--light-blue);
+            transform: scale(1.05);
+        }
+        
+        /* Style pour le badge de notification */
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        /* Menu Hamburger pour mobile */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 99;
+            padding: 1rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-icon {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-dark);
+        }
+
+        .mobile-nav-icon.active {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .mobile-nav-icon:hover {
+            background: var(--light-blue);
+        }
+
+        .mobile-nav-icon i {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Contenu principal */
+        main {
+            flex: 1;
+            padding: 2rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .view {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .view-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-blue);
+        }
+        
+        /* Style pour le bandeau d'accueil */
+        .welcome-banner {
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: var(--white);
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-banner h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Style pour les stats sur l'accueil */
+        .home-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Pied de page */
+        footer {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--glass-border);
+            padding: 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .footer-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+
+        .footer-contact {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .contact-icon {
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.5rem;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .contact-icon:hover {
+            color: var(--secondary-blue);
+            transform: translateY(-2px);
+            background: var(--light-blue);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-link {
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-blue);
+            background: var(--light-blue);
+        }
+
+        /* Styles pour les cartes */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.2);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.8rem;
+            color: var(--primary-blue);
+        }
+
+        /* Styles pour les notifications */
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-blue);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .notification-item:hover {
+            background: var(--light-blue);
+        }
+
+        .notification-icon {
+            font-size: 1.5rem;
+            color: var(--secondary-blue);
+            width: 40px;
+            text-align: center;
+        }
+
+        .notification-actions {
+            position: absolute;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .notification-delete {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .notification-delete-all {
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+
+        /* Styles pour les épreuves */
+        .exam-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--light-blue);
+            border-radius: 10px;
+            background: var(--light-gray);
+            transition: var(--transition);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+        }
+
+        .search-bar {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--light-blue);
+            border-radius: 10px;
+            background: var(--light-gray);
+            transition: var(--transition);
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+        }
+
+        .add-exam-btn {
+            background: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .add-exam-btn i {
+            font-size: 0.8rem;
+        }
+
+        .add-exam-btn:hover {
+            background: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+
+        .exam-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .exam-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.2);
+        }
+
+        .exam-name {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-blue);
+        }
+
+        .exam-details {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .exam-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .exam-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            min-width: 120px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .download-btn {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .download-btn:hover {
+            background: var(--secondary-blue);
+        }
+
+        .view-btn {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .view-btn:hover {
+            background: #0da271;
+        }
+
+        .transfer-btn {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .transfer-btn:hover {
+            background: var(--secondary-blue);
+            color: var(--white);
+        }
+
+        .favorite-btn {
+            background: transparent;
+            border: 1px solid var(--primary-blue);
+            color: var(--primary-blue);
+        }
+        
+        .favorite-btn .fa-heart {
+            color: var(--primary-blue);
+        }
+        
+        .favorite-btn.active {
+            background: var(--primary-blue);
+            color: var(--white);
+        }
+        
+        .favorite-btn.active .fa-heart {
+            color: var(--white);
+        }
+
+        .delete-btn {
+            background: var(--error);
+            color: var(--white);
+        }
+
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .author-link {
+            color: var(--secondary-blue);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Styles pour le profil */
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .profile-info h2 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-blue);
+        }
+
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+        }
+
+        .favorites-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Styles pour les popups */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.5s ease;
+            position: relative;
+        }
+
+        .popup-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-blue);
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--light-gray);
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-light);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Styles pour les formulaires */
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .file-upload {
+            border: 2px dashed var(--light-blue);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload:hover {
+            border-color: var(--secondary-blue);
+            background: var(--light-blue);
+        }
+
+        .submit-btn {
+            background: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover {
+            background: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+
+        /* Styles pour l'administration (Graphiques) */
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .chart-container {
+            background: var(--light-gray);
+            padding: 1rem;
+            border-radius: 10px;
+        }
+        
+        .chart-container h3 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+
+        .pending-exams {
+            margin-bottom: 2rem;
+        }
+
+        .exam-actions-admin {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .approve-btn {
+            background: var(--success);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .reject-btn {
+            background: var(--error);
+            color: var(--white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* Styles pour les résultats de recherche */
+        .search-results {
+            margin-top: 1.5rem;
+        }
+
+        .search-result-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-blue);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .search-result-item:hover {
+            background: var(--light-blue);
+        }
+
+        /* Styles pour les annonces */
+        .announcements-section {
+            margin-bottom: 2rem;
+        }
+
+        .announcement-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .announcement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .announcement-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+
+        .announcement-date {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .announcement-content {
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .announcement-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .like-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--text-light);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .like-btn:hover {
+            color: var(--error);
+        }
+
+        .like-btn.liked {
+            color: var(--error);
+        }
+
+        .like-count {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .announcement-form {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .announcement-form textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid var(--light-blue);
+            border-radius: 10px;
+            background: var(--light-gray);
+            transition: var(--transition);
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .announcement-form textarea:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Styles pour l'écran de design complexe */
+        #complex-design-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6, #1e40af);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .complex-design-content {
+            max-width: 800px;
+            animation: fadeIn 1s ease;
+        }
+
+        .complex-design-title {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .complex-design-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .complex-design-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #dbeafe;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .complex-design-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .design-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+
+        .design-btn.primary {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+
+        .design-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes characterEnter {
+            from { transform: translateX(-100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes characterExit {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100px); opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                grid-template-columns: auto 1fr auto;
+                padding: 0.5rem 1rem;
+            }
+            .header-center {
+                display: none;
+            }
+            .header-right {
+                grid-column: 3 / 4;
+                gap: 0.5rem;
+            }
+            .header-right .nav-icon {
+                padding: 0.5rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                grid-column: 1 / 2;
+            }
+            
+            .home-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-charts {
+                grid-template-columns: 1fr;
+            }
+            
+            .exam-filters {
+                flex-direction: column;
+            }
+            
+            .search-bar {
+                min-width: 100%;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .exam-actions {
+                flex-direction: column;
+            }
+            
+            .exam-btn {
+                min-width: 100%;
+            }
+
+            .complex-design-title {
+                font-size: 2rem;
+            }
+
+            .complex-design-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .complex-design-features {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .announcement-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .welcome-banner h1 {
+                font-size: 1.5rem;
+            }
+            
+            .view-title {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .exam-card {
+                padding: 1rem;
+            }
+            
+            .popup-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="splash-screen">
+        <div class="splash-logo">
+            <span class="hos">Hos</span><span class="bac">Bac</span>
+        </div>
+        <div class="splash-icons">
+            <i class="fas fa-book"></i>
+            <i class="fas fa-pen-alt"></i>
+            <i class="fas fa-graduation-cap"></i>
+            <i class="fas fa-search"></i>
+            <i class="fas fa-folder-open"></i>
+        </div>
+    </div>
+
+    <div id="warning-screen">
+        <div class="warning-container">
+            <h2 class="warning-title">🔒 Avertissement – Utilisation responsable</h2>
+            <div class="warning-text">
+                <p>La plateforme hosBac est un espace éducatif collaboratif dédié au partage d'épreuves et de ressources pédagogiques. Nous encourageons l'entraide et la collaboration entre étudiants.</p>
+                <p>Nous rappelons à tous les utilisateurs que ces ressources doivent être utilisées de manière éthique et responsable, dans le respect du travail des enseignants et des établissements scolaires. Toute tentative de fraude ou de tricherie est strictement interdite.</p>
+                <p>En utilisant cette plateforme, vous vous engagez à respecter ces principes et à contribuer positivement à la communauté éducative.</p>
+            </div>
+            <button class="accept-btn">J'accepte</button>
+        </div>
+    </div>
+
+    <div id="complex-design-screen">
+        <div class="complex-design-content">
+            <h1 class="complex-design-title">Bienvenue sur HosBac</h1>
+            <p class="complex-design-subtitle">La plateforme éducative collaborative pour réussir ensemble</p>
+            
+            <div class="complex-design-features">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h3 class="feature-title">Épreuves Partagées</h3>
+                    <p>Accédez à des milliers d'épreuves partagées par la communauté</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3 class="feature-title">Corrigés Détaillés</h3>
+                    <p>Bénéficiez de corrigés détaillés pour mieux comprendre</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">Communauté Active</h3>
+                    <p>Échangez avec une communauté d'étudiants motivés</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Progression</h3>
+                    <p>Suivez votre progression et gagnez des points</p>
+                </div>
+            </div>
+            
+            <div class="complex-design-actions">
+                <button class="design-btn primary" id="continue-to-warning">Continuer vers la plateforme</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-screen">
+        <div class="auth-container">
+            <div class="tom-jerry-animation" id="jerry-animation">
+                <div class="character jerry"></div>
+                <div class="light-beam" id="jerry-light"></div>
+            </div>
+            <div class="tom-jerry-animation" id="tom-animation">
+                <div class="character tom"></div>
+                <div class="light-beam" id="tom-light"></div>
+            </div>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login">Connexion</div>
+                <div class="auth-tab" data-tab="signup">Inscription</div>
+            </div>
+            
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mot de passe</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="auth-btn">Se connecter</button>
+                <div class="forgot-password">Mot de passe oublié ?</div>
+            </form>
+            
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="signup-nom">Nom</label>
+                    <input type="text" id="signup-nom" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-prenom">Prénom</label>
+                    <input type="text" id="signup-prenom" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-ecole">École</label>
+                    <input type="text" id="signup-ecole" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Mot de passe</label>
+                    <input type="password" id="signup-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirmer le mot de passe</label>
+                    <input type="password" id="signup-confirm-password" required>
+                </div>
+                <button type="submit" class="auth-btn">S'inscrire</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app">
+        <header>
+            <div class="header-content">
+                <button class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-left">
+                    <div class="logo" data-view="home">HosBac</div>
+                </div>
+                <div class="header-center nav-icons">
+                    <div class="nav-icon active" data-view="home" title="Accueil"><i class="fas fa-home"></i></div>
+                    <div class="nav-icon" data-view="exams" title="Examens"><i class="fas fa-file-alt"></i></div>
+                    <div class="nav-icon" data-view="search" title="Recherche"><i class="fas fa-search"></i></div>
+                </div>
+                <div class="header-right nav-icons">
+                    <div class="nav-icon" data-view="notifications" title="Notifications"><i class="fas fa-bell"></i></div>
+                    <div class="nav-icon" data-view="profile" title="Profil"><i class="fas fa-user"></i></div>
+                    <div class="nav-icon" id="admin-icon" data-view="admin" title="Admin" style="display: none;"><i class="fas fa-crown"></i></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="mobile-menu" id="mobile-menu">
+            <div class="mobile-nav-icon active" data-view="home">
+                <i class="fas fa-home"></i>
+                <span>Accueil</span>
+            </div>
+            <div class="mobile-nav-icon" data-view="exams">
+                <i class="fas fa-file-alt"></i>
+                <span>Examens</span>
+            </div>
+            <div class="mobile-nav-icon" data-view="search">
+                <i class="fas fa-search"></i>
+                <span>Recherche</span>
+            </div>
+            <div class="mobile-nav-icon" data-view="notifications">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+            </div>
+            <div class="mobile-nav-icon" data-view="profile">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </div>
+            <div class="mobile-nav-icon" id="mobile-admin-icon" data-view="admin" style="display: none;">
+                <i class="fas fa-crown"></i>
+                <span>Admin</span>
+            </div>
+        </div>
+
+        <main>
+            <div id="home-view" class="view active">
+                <div class="welcome-banner">
+                    <h1 id="welcome-message">Bonjour !</h1>
+                    <p id="welcome-subtitle">Bienvenue sur HosBac. Prêt à réviser ?</p>
+                </div>
+                
+                <h2 class="view-title">Vos Statistiques</h2>
+                <div class="profile-stats home-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="home-points-balance">0</div>
+                        <div class="stat-label">Points</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="home-exams-uploaded">0</div>
+                        <div class="stat-label">Épreuves partagées</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="home-exams-downloaded">0</div>
+                        <div class="stat-label">Épreuves téléchargées</div>
+                    </div>
+                </div>
+                
+                <div class="announcements-section">
+                    <h2 class="view-title">Annonces</h2>
+                    <div id="announcements-list">
+                        <!-- Les annonces seront chargées ici -->
+                    </div>
+                </div>
+                
+                <h2 class="view-title">Épreuves récentes</h2>
+                <div class="card">
+                    <div id="recent-exams" class="exam-list">
+                        <!-- Les épreuves récentes seront chargées ici -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="notifications-view" class="view">
+                <h1 class="view-title">Notifications</h1>
+                <button id="delete-all-notifications" class="notification-delete-all">Supprimer toutes les notifications</button>
+                <div id="notifications-list">
+                    <!-- Les notifications seront chargées ici -->
+                </div>
+            </div>
+
+            <div id="exams-view" class="view">
+                <h1 class="view-title">Examens</h1>
+                <div class="exam-filters">
+                    <select id="filter-class" class="filter-select">
+                        <option value="">Toutes les classes</option>
+                        <option value="6ème">6ème</option>
+                        <option value="5ème">5ème</option>
+                        <option value="4ème">4ème</option>
+                        <option value="3ème">3ème</option>
+                        <option value="2nd">2nd</option>
+                        <option value="1ère">1ère</option>
+                        <option value="Terminale">Terminale</option>
+                    </select>
+                    <select id="filter-subject" class="filter-select">
+                        <option value="">Toutes les matières</option>
+                        <option value="Mathématique">Mathématique</option>
+                        <option value="Français">Français</option>
+                        <option value="Histoire-géographie">Histoire-géographie</option>
+                        <option value="Allemand">Allemand</option>
+                        <option value="Économie">Économie</option>
+                        <option value="T-bad">T-bad</option>
+                        <option value="Espagnol">Espagnol</option>
+                        <option value="Anglais">Anglais</option>
+                        <option value="SVT">SVT</option>
+                        <option value="PCT">PCT</option>
+                        <option value="Droit">Droit</option>
+                    </select>
+                    <select id="filter-series" class="filter-select">
+                        <option value="">Toutes les séries</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="G">G</option>
+                    </select>
+                    <input type="text" id="search-exams" class="search-bar" placeholder="Rechercher une épreuve...">
+                    <button id="add-exam-btn" class="add-exam-btn">
+                        <i class="fas fa-plus"></i> Ajouter une épreuve
+                    </button>
+                    <button id="add-corrige-only-btn" class="add-exam-btn" style="background: var(--success);">
+                        <i class="fas fa-file-pdf"></i> Ajouter un corrigé seulement
+                    </button>
+                </div>
+                <div id="exams-list" class="exam-list">
+                    <!-- Les épreuves seront chargées ici -->
+                </div>
+            </div>
+
+            <div id="search-view" class="view">
+                <h1 class="view-title">Recherche</h1>
+                <div class="card">
+                    <input type="text" id="global-search" class="search-bar" placeholder="Rechercher des épreuves, utilisateurs...">
+                    <div id="search-results" class="search-results">
+                        <!-- Les résultats de recherche seront affichés ici -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="profile-view" class="view">
+                <h1 class="view-title">Profil</h1>
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profile-avatar">U</div>
+                    <div class="profile-info">
+                        <h2 id="profile-name">Utilisateur</h2>
+                        <p id="profile-email">email@exemple.com</p>
+                        <p id="profile-class">Classe: Non définie</p>
+                    </div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="points-balance">0</div>
+                        <div class="stat-label">Points</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="exams-uploaded">0</div>
+                        <div class="stat-label">Épreuves partagées</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="exams-downloaded">0</div>
+                        <div class="stat-label">Épreuves téléchargées</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Modifier le profil</h2>
+                    <form id="profile-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-nom">Nom</label>
+                                <input type="text" id="edit-nom">
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-prenom">Prénom</label>
+                                <input type="text" id="edit-prenom">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-classe">Classe</label>
+                            <input type="text" id="edit-classe">
+                        </div>
+                        <button type="submit" class="submit-btn">Sauvegarder</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Épreuves favorites</h2>
+                    <div id="favorites-list" class="favorites-list">
+                        <!-- Les favoris seront chargés ici -->
+                    </div>
+                </div>
+                
+                <button id="logout-btn" class="auth-btn" style="margin-top: 2rem;">Se Déconnecter</button>
+            </div>
+
+            <div id="admin-view" class="view">
+                <h1 class="view-title">Panneau d'Administration</h1>
+                
+                <div class="admin-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-users">0</div>
+                        <div class="stat-label">Utilisateurs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-exams">0</div>
+                        <div class="stat-label">Épreuves</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pending-exams-count">0</div>
+                        <div class="stat-label">En attente</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2 class="card-title">Statistiques du Site</h2>
+                    <div class="admin-charts">
+                        <div class="chart-container">
+                            <h3>Nouveaux utilisateurs (7 derniers jours)</h3>
+                            <canvas id="users-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Top 5 Épreuves (Téléchargements)</h3>
+                            <canvas id="exams-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card announcement-form">
+                    <h2 class="card-title">Publier une annonce</h2>
+                    <form id="announcement-form">
+                        <div class="form-group">
+                            <label for="announcement-title">Titre de l'annonce</label>
+                            <input type="text" id="announcement-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcement-content">Contenu de l'annonce</label>
+                            <textarea id="announcement-content" required></textarea>
+                        </div>
+                        <button type="submit" class="submit-btn">Publier l'annonce</button>
+                    </form>
+                </div>
+                
+                <div class="pending-exams card">
+                    <h3 class="card-title">Épreuves en attente d'approbation</h3>
+                    <div id="pending-exams-list">
+                        <!-- Les épreuves en attente seront chargées ici -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-brand">HosBac</div>
+                <div class="footer-contact">
+                    <a href="https://www.facebook.com/profile.php?id=61579985138308" target="_blank" class="contact-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://wa.me/qr/73EC225KOITDD1" target="_blank" class="contact-icon" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    <a href="mailto:mickaelpcs14@gmail.com" class="contact-icon" title="Email"><i class="fas fa-envelope"></i></a>
+                    <a href="tel:+2290198860752" class="contact-icon" title="Téléphone"><i class="fas fa-phone"></i></a>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-link" id="terms-link">Conditions Générales d'Utilisation</div>
+                    <div class="footer-link" id="privacy-link">Politique de Confidentialité</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="add-exam-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title">Ajouter une épreuve</h2>
+            <form id="add-exam-form">
+                <div class="form-group">
+                    <label for="exam-matiere">Matière</label>
+                    <select id="exam-matiere" required>
+                        <option value="">Sélectionnez une matière</option>
+                        <option value="Mathématique">Mathématique</option>
+                        <option value="Français">Français</option>
+                        <option value="SVT">SVT</option>
+                        <option value="PCT">PCT</option>
+                        <option value="Espagnol">Espagnol</option>
+                        <option value="Histoire-géographie">Histoire-géographie</option>
+                        <option value="Allemand">Allemand</option>
+                        <option value="Économie">Économie</option>
+                        <option value="Anglais">Anglais</option>
+                        <option value="Comptabilité">Comptabilité</option>
+                        <option value="T-bad">T-bad</option>
+                        <option value="Philosophie">Philosophie</option>
+                        <option value="Droit">Droit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exam-classe">Classe</label>
+                    <select id="exam-classe" required>
+                        <option value="">Sélectionnez une classe</option>
+                        <option value="6ème">6ème</option>
+                        <option value="5ème">5ème</option>
+                        <option value="4ème">4ème</option>
+                        <option value="3ème">3ème</option>
+                        <option value="2nd">2nd</option>
+                        <option value="1ère">1ère</option>
+                        <option value="Terminale">Terminale</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exam-serie">Série</label>
+                    <select id="exam-serie" required>
+                        <option value="">Sélectionnez une série</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="G">G</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="exam-nom">Nom de l'épreuve</label>
+                    <input type="text" id="exam-nom" required>
+                </div>
+                <div class="form-group">
+                    <label for="exam-sujet">Fichier sujet (PDF)</label>
+                    <div class="file-upload" id="sujet-upload">
+                        <p>Cliquez pour télécharger le fichier sujet</p>
+                    </div>
+                    <input type="hidden" id="exam-sujet-url">
+                </div>
+                <div class="form-group">
+                    <label for="exam-corrige">Fichier corrigé (PDF) - Facultatif</label>
+                    <div class="file-upload" id="corrige-upload">
+                        <p>Cliquez pour télécharger le fichier corrigé</p>
+                    </div>
+                    <input type="hidden" id="exam-corrige-url">
+                </div>
+                <button type="submit" class="submit-btn">Soumettre l'épreuve</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-corrige-only-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title">Ajouter un corrigé seulement</h2>
+            <form id="add-corrige-only-form">
+                <div class="form-group">
+                    <label for="corrige-exam-select">Sélectionner l'épreuve</label>
+                    <select id="corrige-exam-select" required>
+                        <option value="">Sélectionnez une épreuve existante</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="corrige-only-upload">Fichier corrigé (PDF)</label>
+                    <div class="file-upload" id="corrige-only-upload">
+                        <p>Cliquez pour télécharger le fichier corrigé</p>
+                    </div>
+                    <input type="hidden" id="corrige-only-url">
+                </div>
+                <button type="submit" class="submit-btn">Soumettre le corrigé</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="transfer-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title">Transférer l'épreuve</h2>
+            <div class="form-group">
+                <input type="text" id="user-search" class="search-bar" placeholder="Rechercher un utilisateur par email...">
+            </div>
+            <div id="search-results-list">
+                <!-- Les résultats de recherche seront affichés ici -->
+            </div>
+            <button id="send-transfer-btn" class="submit-btn">Envoyer</button>
+        </div>
+    </div>
+
+    <div id="terms-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title">Conditions Générales d'Utilisation</h2>
+            <div class="warning-text">
+                <p>Les présentes conditions générales d'utilisation (dites « CGU ») ont pour objet l'encadrement juridique des modalités de mise à disposition du site et des services par HosBac et de définir les conditions d'accès et d'utilisation des services par « l'Utilisateur ».</p>
+                <p>Les présentes CGU sont accessibles sur le site à la rubrique «CGU».</p>
+                <p>Toute inscription ou utilisation du site implique l'acceptation sans aucune réserve ni restriction des présentes CGU par l'utilisateur. Lors de l'inscription sur le site via le Formulaire d'inscription, chaque utilisateur accepte expressément les présentes CGU en cochant la case précédant le texte suivant : « Je reconnais avoir lu et compris les CGU et je les accepte ».</p>
+                <p>En cas de non-acceptation des CGU stipulées dans le présent contrat, l'Utilisateur se doit de renoncer à l'accès des services proposés par le site.</p>
+                <p>HosBac se réserve le droit de modifier unilatéralement et à tout moment le contenu des présentes CGU.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="privacy-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title">Politique de Confidentialité</h2>
+            <div class="warning-text">
+                <p>La présente politique de confidentialité a pour but d'informer les utilisateurs du site HosBac sur la manière dont sont collectées et utilisées leurs données personnelles.</p>
+                <p>Conformément à la loi Informatique et Libertés du 6 janvier 1978 modifiée, HosBac s'engage à respecter la confidentialité des données personnelles des utilisateurs et à les traiter dans le respect des dispositions légales en vigueur.</p>
+                <p>Les données personnelles collectées sur le site HosBac sont les suivantes :</p>
+                <ul>
+                    <li>Nom et prénom</li>
+                    <li>Adresse électronique</li>
+                    <li>Établissement scolaire</li>
+                    <li>Classe</li>
+                </ul>
+                <p>Ces données sont collectées lorsque l'utilisateur s'inscrit sur le site ou lorsqu'il utilise les services proposés.</p>
+                <p>Les données personnelles collectées sont utilisées pour :</p>
+                <ul>
+                    <li>La gestion du compte utilisateur</li>
+                    <li>La fourniture des services proposés par le site</li>
+                    <li>L'amélioration de l'expérience utilisateur</li>
+                    <li>La communication d'informations relatives au service</li>
+                </ul>
+                <p>HosBac s'engage à ne pas vendre, louer ou céder les données personnelles des utilisateurs à des tiers.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Son de notification -->
+    <audio id="notification-sound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3" type="audio/mp3">
+    </audio>
+
+    <script>
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZQDAO0xK3nZqSwh41u91IbIc4ufkrd1o",
+            authDomain: "hosbac-6ae23.firebaseapp.com",
+            projectId: "hosbac-6ae23",
+            storageBucket: "hosbac-6ae23.firebasestorage.app",
+            messagingSenderId: "770406769367",
+            appId: "1:770406769367:web:8e2a3f27ce0044fd120692"
+        };
+
+        // Initialisation de Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Configuration Cloudinary
+        const cloudName = "dqn1dbimm";
+        const uploadPreset = "hosbac_preset";
+
+        // Variables globales
+        let currentUser = null;
+        let isAdmin = false;
+        let userData = null;
+        let notificationListener = null;
+        let announcementsListener = null;
+        let pendingExamsListener = null;
+        
+        // Variables globales pour les instances des graphiques
+        let usersChartInstance = null;
+        let examsChartInstance = null;
+
+        // Éléments DOM
+        const splashScreen = document.getElementById('splash-screen');
+        const warningScreen = document.getElementById('warning-screen');
+        const complexDesignScreen = document.getElementById('complex-design-screen');
+        const authScreen = document.getElementById('auth-screen');
+        const app = document.getElementById('app');
+        const navIcons = document.querySelectorAll('.nav-icon');
+        const mobileNavIcons = document.querySelectorAll('.mobile-nav-icon');
+        const views = document.querySelectorAll('.view');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const authForms = document.querySelectorAll('.auth-form');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const addExamBtn = document.getElementById('add-exam-btn');
+        const addCorrigeOnlyBtn = document.getElementById('add-corrige-only-btn');
+        const addExamPopup = document.getElementById('add-exam-popup');
+        const addCorrigeOnlyPopup = document.getElementById('add-corrige-only-popup');
+        const addExamForm = document.getElementById('add-exam-form');
+        const addCorrigeOnlyForm = document.getElementById('add-corrige-only-form');
+        const transferPopup = document.getElementById('transfer-popup');
+        const termsPopup = document.getElementById('terms-popup');
+        const privacyPopup = document.getElementById('privacy-popup');
+        const logoutBtn = document.getElementById('logout-btn');
+        const profileForm = document.getElementById('profile-form');
+        const termsLink = document.getElementById('terms-link');
+        const privacyLink = document.getElementById('privacy-link');
+        const popupCloseButtons = document.querySelectorAll('.popup-close');
+        const adminIcon = document.getElementById('admin-icon');
+        const mobileAdminIcon = document.getElementById('mobile-admin-icon');
+        const filterClass = document.getElementById('filter-class');
+        const filterSubject = document.getElementById('filter-subject');
+        const filterSeries = document.getElementById('filter-series');
+        const searchExams = document.getElementById('search-exams');
+        const globalSearch = document.getElementById('global-search');
+        const searchResults = document.getElementById('search-results');
+        const deleteAllNotificationsBtn = document.getElementById('delete-all-notifications');
+        const notificationSound = document.getElementById('notification-sound');
+        const jerryAnimation = document.getElementById('jerry-animation');
+        const tomAnimation = document.getElementById('tom-animation');
+        const jerryLight = document.getElementById('jerry-light');
+        const tomLight = document.getElementById('tom-light');
+        const announcementForm = document.getElementById('announcement-form');
+        const announcementsList = document.getElementById('announcements-list');
+        const continueToWarningBtn = document.getElementById('continue-to-warning');
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const welcomeMessage = document.getElementById('welcome-message');
+        const welcomeSubtitle = document.getElementById('welcome-subtitle');
+
+        // Vérifier si l'URL contient un paramètre de partage d'épreuve
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedExamId = urlParams.get('exam');
+
+        // Service Worker pour PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker enregistré avec succès:', registration);
+                    })
+                    .catch(function(error) {
+                        console.log('Échec de l\'enregistrement du Service Worker:', error);
+                    });
+            });
+        }
+
+        // Initialisation de l'application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Afficher l'écran de démarrage pendant 4 secondes
+            setTimeout(() => {
+                splashScreen.style.opacity = '0';
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    
+                    // Si un ID d'épreuve partagée est présent dans l'URL, afficher l'écran de design complexe
+                    if (sharedExamId) {
+                        complexDesignScreen.style.display = 'flex';
+                    } else {
+                        warningScreen.style.display = 'flex';
+                    }
+                }, 500);
+            }, 4000);
+
+            // Gestionnaire pour le bouton "Continuer vers la plateforme" sur l'écran de design complexe
+            continueToWarningBtn.addEventListener('click', () => {
+                complexDesignScreen.style.display = 'none';
+                warningScreen.style.display = 'flex';
+            });
+
+            // Gestionnaire pour le bouton "J'accepte"
+            document.querySelector('.accept-btn').addEventListener('click', () => {
+                warningScreen.style.display = 'none';
+                
+                // Vérifier si l'utilisateur est déjà connecté
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        // L'utilisateur est connecté
+                        currentUser = user;
+                        checkUserRole();
+                        app.style.display = 'block';
+                        loadUserData();
+                        startNotificationListener();
+                        startAnnouncementsListener();
+                        startPendingExamsListener();
+                        
+                        // Si un ID d'épreuve partagée est présent, rediriger vers la vue des examens
+                        if (sharedExamId) {
+                            document.querySelector('.nav-icon[data-view="exams"]').click();
+                        }
+                    } else {
+                        // L'utilisateur n'est pas connecté
+                        authScreen.style.display = 'flex';
+                    }
+                });
+            });
+
+            // Gestionnaire pour le menu hamburger mobile
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Fermer le menu mobile en cliquant à l'extérieur
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                }
+            });
+
+            // Gestionnaires pour les onglets d'authentification avec animations Tom et Jerry
+            authTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // Activer l'onglet sélectionné
+                    authTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Afficher le formulaire correspondant avec animation
+                    if (tabName === 'signup') {
+                        showJerryAnimation();
+                    } else {
+                        showTomAnimation();
+                    }
+                });
+            });
+
+            // Fonction pour afficher l'animation de Jerry
+            function showJerryAnimation() {
+                // Masquer le formulaire de connexion
+                document.getElementById('login-form').classList.remove('active');
+                
+                // Afficher l'animation de Jerry
+                jerryAnimation.classList.add('active');
+                const jerryCharacter = jerryAnimation.querySelector('.jerry');
+                jerryCharacter.style.animation = 'characterEnter 0.8s forwards';
+                
+                // Activer le faisceau lumineux
+                setTimeout(() => {
+                    jerryLight.classList.add('active');
+                }, 800);
+                
+                // Afficher le formulaire d'inscription
+                setTimeout(() => {
+                    document.getElementById('signup-form').classList.add('active');
+                }, 1500);
+                
+                // Masquer l'animation après un délai
+                setTimeout(() => {
+                    jerryAnimation.classList.remove('active');
+                    jerryLight.classList.remove('active');
+                    jerryCharacter.style.animation = '';
+                }, 2500);
+            }
+
+            // Fonction pour afficher l'animation de Tom
+            function showTomAnimation() {
+                // Masquer le formulaire d'inscription
+                document.getElementById('signup-form').classList.remove('active');
+                
+                // Afficher l'animation de Tom
+                tomAnimation.classList.add('active');
+                const tomCharacter = tomAnimation.querySelector('.tom');
+                tomCharacter.style.animation = 'characterEnter 0.8s forwards';
+                
+                // Activer le faisceau lumineux
+                setTimeout(() => {
+                    tomLight.classList.add('active');
+                }, 800);
+                
+                // Afficher le formulaire de connexion
+                setTimeout(() => {
+                    document.getElementById('login-form').classList.add('active');
+                }, 1500);
+                
+                // Masquer l'animation après un délai
+                setTimeout(() => {
+                    tomAnimation.classList.remove('active');
+                    tomLight.classList.remove('active');
+                    tomCharacter.style.animation = '';
+                }, 2500);
+            }
+
+            // Gestionnaire pour la connexion
+            loginForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                auth.signInWithEmailAndPassword(email, password)
+                    .then(userCredential => {
+                        // Connexion réussie
+                        currentUser = userCredential.user;
+                        authScreen.style.display = 'none';
+                        app.style.display = 'block';
+                        checkUserRole();
+                        loadUserData();
+                        startNotificationListener();
+                        startAnnouncementsListener();
+                        startPendingExamsListener();
+                        showNotification('Connexion réussie', 'success');
+                    })
+                    .catch(error => {
+                        // Erreur de connexion
+                        console.error('Erreur de connexion:', error);
+                        if (error.code === 'auth/invalid-login-credentials') {
+                            showNotification('Email ou mot de passe incorrect', 'error');
+                        } else if (error.code === 'auth/wrong-password') {
+                            showNotification('Mot de passe incorrect', 'error');
+                        } else {
+                            showNotification('Erreur de connexion', 'error');
+                        }
+                    });
+            });
+
+            // Gestionnaire pour l'inscription
+            signupForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const nom = document.getElementById('signup-nom').value;
+                const prenom = document.getElementById('signup-prenom').value;
+                const ecole = document.getElementById('signup-ecole').value;
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                const confirmPassword = document.getElementById('signup-confirm-password').value;
+                
+                if (password !== confirmPassword) {
+                    showNotification('Les mots de passe ne correspondent pas', 'error');
+                    return;
+                }
+                
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(userCredential => {
+                        // Inscription réussie
+                        currentUser = userCredential.user;
+                        
+                        // Créer le document utilisateur dans Firestore
+                        return db.collection('users').doc(currentUser.uid).set({
+                            nom: nom,
+                            prenom: prenom,
+                            ecole: ecole,
+                            email: email,
+                            classe: '',
+                            points: 0,
+                            examsUploaded: 0,
+                            examsDownloaded: 0,
+                            role: 'user',
+                            likedAnnouncements: [],
+                            favorites: [],
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        authScreen.style.display = 'none';
+                        app.style.display = 'block';
+                        checkUserRole();
+                        loadUserData();
+                        startNotificationListener();
+                        startAnnouncementsListener();
+                        startPendingExamsListener();
+                        showNotification('Inscription réussie', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Erreur d\'inscription:', error);
+                        showNotification('Erreur d\'inscription', 'error');
+                    });
+            });
+
+            // Gestionnaire pour la réinitialisation du mot de passe
+            document.querySelector('.forgot-password').addEventListener('click', () => {
+                const email = document.getElementById('login-email').value;
+                
+                if (!email) {
+                    showNotification('Veuillez entrer votre email', 'warning');
+                    return;
+                }
+                
+                auth.sendPasswordResetEmail(email)
+                    .then(() => {
+                        showNotification('Lien de réinitialisation envoyé', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Erreur d\'envoi:', error);
+                        showNotification('Erreur d\'envoi du lien', 'error');
+                    });
+            });
+
+            // Gestionnaire pour le formulaire d'annonce
+            announcementForm.addEventListener('submit', e => {
+                e.preventDefault();
+                submitAnnouncement();
+            });
+
+            // Gestionnaires pour la navigation desktop
+            navIcons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const viewName = icon.getAttribute('data-view');
+                    if (!viewName) return;
+                    
+                    // Activer l'icône sélectionnée
+                    navIcons.forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll(`.nav-icon[data-view="${viewName}"]`).forEach(activeIcon => {
+                        activeIcon.classList.add('active');
+                    });
+                    
+                    // Afficher la vue correspondante
+                    switchView(viewName);
+                });
+            });
+            
+            // Gestionnaires pour la navigation mobile
+            mobileNavIcons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const viewName = icon.getAttribute('data-view');
+                    if (!viewName) return;
+                    
+                    // Activer l'icône sélectionnée
+                    mobileNavIcons.forEach(i => i.classList.remove('active'));
+                    icon.classList.add('active');
+                    
+                    // Activer aussi l'icône desktop correspondante
+                    navIcons.forEach(i => {
+                        if (i.getAttribute('data-view') === viewName) {
+                            i.classList.add('active');
+                        } else {
+                            i.classList.remove('active');
+                        }
+                    });
+                    
+                    // Afficher la vue correspondante
+                    switchView(viewName);
+                    
+                    // Fermer le menu mobile
+                    mobileMenu.classList.remove('active');
+                });
+            });
+            
+            // Fonction pour changer de vue
+            function switchView(viewName) {
+                views.forEach(view => {
+                    view.classList.remove('active');
+                    if (view.id === `${viewName}-view`) {
+                        view.classList.add('active');
+                    }
+                });
+                
+                // Charger les données de la vue
+                switch(viewName) {
+                    case 'home':
+                        loadRecentExams();
+                        break;
+                    case 'notifications':
+                        loadNotifications();
+                        break;
+                    case 'exams':
+                        loadAllExams();
+                        break;
+                    case 'search':
+                        break;
+                    case 'profile':
+                        loadProfileData();
+                        break;
+                    case 'admin':
+                        loadAdminPanel();
+                        break;
+                }
+            }
+            
+            // Clic sur le logo ramène à l'accueil
+            document.querySelector('.logo').addEventListener('click', () => {
+                switchView('home');
+            });
+
+            // Gestionnaire pour le bouton d'ajout d'épreuve
+            addExamBtn.addEventListener('click', () => {
+                addExamPopup.style.display = 'flex';
+            });
+
+            // Gestionnaire pour le bouton d'ajout de corrigé seulement
+            addCorrigeOnlyBtn.addEventListener('click', () => {
+                loadExistingExamsForCorrige();
+                addCorrigeOnlyPopup.style.display = 'flex';
+            });
+
+            // Gestionnaire pour le formulaire d'ajout d'épreuve
+            addExamForm.addEventListener('submit', e => {
+                e.preventDefault();
+                submitExam();
+            });
+
+            // Gestionnaire pour le formulaire d'ajout de corrigé seulement
+            addCorrigeOnlyForm.addEventListener('submit', e => {
+                e.preventDefault();
+                submitCorrigeOnly();
+            });
+
+            // Gestionnaire pour le bouton de déconnexion
+            logoutBtn.addEventListener('click', () => {
+                if (notificationListener) {
+                    notificationListener();
+                }
+                if (announcementsListener) {
+                    announcementsListener();
+                }
+                if (pendingExamsListener) {
+                    pendingExamsListener();
+                }
+                auth.signOut()
+                    .then(() => {
+                        currentUser = null;
+                        isAdmin = false;
+                        userData = null;
+                        app.style.display = 'none';
+                        authScreen.style.display = 'flex';
+                        showNotification('Déconnexion réussie', 'success');
+                    })
+                    .catch(error => {
+                        console.error('Erreur de déconnexion:', error);
+                    });
+            });
+
+            // Gestionnaire pour le formulaire de profil
+            profileForm.addEventListener('submit', e => {
+                e.preventDefault();
+                updateProfile();
+            });
+
+            // Gestionnaires pour les liens du pied de page
+            termsLink.addEventListener('click', () => {
+                termsPopup.style.display = 'flex';
+            });
+
+            privacyLink.addEventListener('click', () => {
+                privacyPopup.style.display = 'flex';
+            });
+
+            // Gestionnaire pour supprimer toutes les notifications
+            deleteAllNotificationsBtn.addEventListener('click', () => {
+                deleteAllNotifications();
+            });
+
+            // Gestionnaires pour fermer les popups
+            popupCloseButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    button.closest('.popup-overlay').style.display = 'none';
+                });
+            });
+
+            // Fermer les popups en cliquant à l'extérieur
+            document.querySelectorAll('.popup-overlay').forEach(popup => {
+                popup.addEventListener('click', e => {
+                    if (e.target === popup) {
+                        popup.style.display = 'none';
+                    }
+                });
+            });
+
+            // Configuration Cloudinary
+            let sujetUploadWidget, corrigeUploadWidget, corrigeOnlyUploadWidget;
+            
+            try {
+                sujetUploadWidget = cloudinary.createUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ['local'],
+                    multiple: false,
+                    resourceType: 'raw',
+                    clientAllowedFormats: ['pdf'],
+                    maxFileSize: 5000000
+                }, (error, result) => {
+                    if (!error && result && result.event === 'success') {
+                        const fileUrl = result.info.secure_url;
+                        console.log('URL Cloudinary sujet:', fileUrl);
+                        document.getElementById('exam-sujet-url').value = fileUrl;
+                        document.getElementById('sujet-upload').innerHTML = `<p>Fichier sujet téléchargé: ${result.info.original_filename}</p>`;
+                        showNotification('Fichier sujet uploadé avec succès', 'success');
+                    } else if (error) {
+                        console.error('Erreur upload Cloudinary sujet:', error);
+                        showNotification('Erreur lors du téléchargement du fichier sujet', 'error');
+                    }
+                });
+
+                corrigeUploadWidget = cloudinary.createUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ['local'],
+                    multiple: false,
+                    resourceType: 'raw',
+                    clientAllowedFormats: ['pdf'],
+                    maxFileSize: 5000000
+                }, (error, result) => {
+                    if (!error && result && result.event === 'success') {
+                        const fileUrl = result.info.secure_url;
+                        console.log('URL Cloudinary corrigé:', fileUrl);
+                        document.getElementById('exam-corrige-url').value = fileUrl;
+                        document.getElementById('corrige-upload').innerHTML = `<p>Fichier corrigé téléchargé: ${result.info.original_filename}</p>`;
+                        showNotification('Fichier corrigé uploadé avec succès', 'success');
+                    } else if (error) {
+                        console.error('Erreur upload Cloudinary corrigé:', error);
+                        showNotification('Erreur lors du téléchargement du fichier corrigé', 'error');
+                    }
+                });
+
+                corrigeOnlyUploadWidget = cloudinary.createUploadWidget({
+                    cloudName: cloudName,
+                    uploadPreset: uploadPreset,
+                    sources: ['local'],
+                    multiple: false,
+                    resourceType: 'raw',
+                    clientAllowedFormats: ['pdf'],
+                    maxFileSize: 5000000
+                }, (error, result) => {
+                    if (!error && result && result.event === 'success') {
+                        const fileUrl = result.info.secure_url;
+                        console.log('URL Cloudinary corrigé seulement:', fileUrl);
+                        document.getElementById('corrige-only-url').value = fileUrl;
+                        document.getElementById('corrige-only-upload').innerHTML = `<p>Fichier corrigé téléchargé: ${result.info.original_filename}</p>`;
+                        showNotification('Fichier corrigé uploadé avec succès', 'success');
+                    } else if (error) {
+                        console.error('Erreur upload Cloudinary corrigé seulement:', error);
+                        showNotification('Erreur lors du téléchargement du fichier corrigé', 'error');
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur initialisation Cloudinary:', error);
+                showNotification('Erreur d\'initialisation du système de fichier', 'error');
+            }
+
+            document.getElementById('sujet-upload').addEventListener('click', () => {
+                if (sujetUploadWidget) {
+                    sujetUploadWidget.open();
+                } else {
+                    showNotification('Erreur: Système de fichier non initialisé', 'error');
+                }
+            });
+
+            document.getElementById('corrige-upload').addEventListener('click', () => {
+                if (corrigeUploadWidget) {
+                    corrigeUploadWidget.open();
+                } else {
+                    showNotification('Erreur: Système de fichier non initialisé', 'error');
+                }
+            });
+
+            document.getElementById('corrige-only-upload').addEventListener('click', () => {
+                if (corrigeOnlyUploadWidget) {
+                    corrigeOnlyUploadWidget.open();
+                } else {
+                    showNotification('Erreur: Système de fichier non initialisé', 'error');
+                }
+            });
+
+            // Gestionnaires pour les filtres d'examens
+            filterClass.addEventListener('change', applyFilters);
+            filterSubject.addEventListener('change', applyFilters);
+            filterSeries.addEventListener('change', applyFilters);
+            searchExams.addEventListener('input', debounce(applyFilters, 300));
+
+            // Gestionnaire pour la recherche globale
+            globalSearch.addEventListener('input', debounce(() => {
+                performGlobalSearch(globalSearch.value);
+            }, 300));
+        });
+
+        // Démarrer l'écoute des notifications en temps réel
+        function startNotificationListener() {
+            if (!currentUser) return;
+            
+            notificationListener = db.collection('users').doc(currentUser.uid)
+                .collection('notifications')
+                .where('read', '==', false)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            // Nouvelle notification - jouer le son et vibrer
+                            playNotificationSound();
+                            vibratePhone();
+                            
+                            // Recharger les notifications si on est sur la vue notifications
+                            if (document.getElementById('notifications-view').classList.contains('active')) {
+                                loadNotifications();
+                            }
+                            
+                            // Mettre à jour le badge de notification
+                            updateNotificationBadge();
+                        }
+                    });
+                }, error => {
+                    console.error('Erreur écoute notifications:', error);
+                });
+        }
+
+        // Démarrer l'écoute des annonces en temps réel
+        function startAnnouncementsListener() {
+            announcementsListener = db.collection('announcements')
+                .orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    loadAnnouncements();
+                }, error => {
+                    console.error('Erreur écoute annonces:', error);
+                });
+        }
+
+        // Démarrer l'écoute des épreuves en attente pour l'admin
+        function startPendingExamsListener() {
+            if (!isAdmin) return;
+            
+            pendingExamsListener = db.collection('epreuves')
+                .where('status', '==', 'pending')
+                .onSnapshot(snapshot => {
+                    if (document.getElementById('admin-view').classList.contains('active')) {
+                        loadPendingExams();
+                    }
+                    updatePendingExamsCount();
+                }, error => {
+                    console.error('Erreur écoute épreuves en attente:', error);
+                });
+        }
+
+        // Jouer le son de notification
+        function playNotificationSound() {
+            try {
+                notificationSound.currentTime = 0;
+                notificationSound.play().catch(e => {
+                    console.log('Lecture audio bloquée:', e);
+                });
+            } catch (error) {
+                console.error('Erreur lecture son notification:', error);
+            }
+        }
+
+        // Faire vibrer le téléphone
+        function vibratePhone() {
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+
+        // Fonction pour vérifier le rôle admin
+        function checkUserRole() {
+            if (!currentUser) return;
+            
+            db.collection('users').doc(currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        userData = doc.data();
+                        isAdmin = userData.role === 'admin';
+                        
+                        if (isAdmin) {
+                            adminIcon.style.display = 'flex';
+                            mobileAdminIcon.style.display = 'flex';
+                            startPendingExamsListener();
+                        } else {
+                            adminIcon.style.display = 'none';
+                            mobileAdminIcon.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la vérification du rôle:', error);
+                });
+        }
+
+        function loadUserData() {
+            loadRecentExams();
+            loadNotifications();
+            loadProfileData();
+            loadAnnouncements();
+            updateNotificationBadge();
+            if (isAdmin) {
+                updatePendingExamsCount();
+            }
+        }
+
+        function loadAnnouncements() {
+            const announcementsContainer = document.getElementById('announcements-list');
+            announcementsContainer.innerHTML = '<p>Chargement des annonces...</p>';
+            
+            db.collection('announcements')
+                .orderBy('createdAt', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    announcementsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        announcementsContainer.innerHTML = '<p>Aucune annonce pour le moment.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const announcement = doc.data();
+                        const announcementCard = createAnnouncementCard(announcement, doc.id);
+                        announcementsContainer.appendChild(announcementCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des annonces:', error);
+                    announcementsContainer.innerHTML = '<p>Erreur lors du chargement des annonces.</p>';
+                });
+        }
+
+        function createAnnouncementCard(announcement, announcementId) {
+            const card = document.createElement('div');
+            card.className = 'announcement-card';
+            
+            const hasLiked = userData && userData.likedAnnouncements && userData.likedAnnouncements.includes(announcementId);
+            
+            card.innerHTML = `
+                <div class="announcement-header">
+                    <div class="announcement-title">${announcement.title}</div>
+                    <div class="announcement-date">${new Date(announcement.createdAt?.toDate()).toLocaleDateString('fr-FR')}</div>
+                </div>
+                <div class="announcement-content">
+                    ${announcement.content}
+                </div>
+                <div class="announcement-actions">
+                    <button class="like-btn ${hasLiked ? 'liked' : ''}" data-announcement-id="${announcementId}">
+                        <i class="fas fa-heart"></i>
+                        <span class="like-count">${announcement.likes || 0}</span>
+                    </button>
+                </div>
+            `;
+            
+            const likeBtn = card.querySelector('.like-btn');
+            likeBtn.addEventListener('click', () => {
+                toggleAnnouncementLike(announcementId, likeBtn);
+            });
+            
+            return card;
+        }
+
+        function toggleAnnouncementLike(announcementId, button) {
+            if (!userData) return;
+            
+            const isCurrentlyLiked = userData.likedAnnouncements && userData.likedAnnouncements.includes(announcementId);
+            
+            let newLikedAnnouncements = userData.likedAnnouncements ? [...userData.likedAnnouncements] : [];
+            
+            if (isCurrentlyLiked) {
+                // Retirer le like
+                newLikedAnnouncements = newLikedAnnouncements.filter(id => id !== announcementId);
+                button.classList.remove('liked');
+                
+                // Mettre à jour le compteur de likes
+                db.collection('announcements').doc(announcementId).update({
+                    likes: firebase.firestore.FieldValue.increment(-1)
+                });
+                
+                showNotification('Like retiré', 'success');
+            } else {
+                // Ajouter le like
+                newLikedAnnouncements.push(announcementId);
+                button.classList.add('liked');
+                
+                // Mettre à jour le compteur de likes
+                db.collection('announcements').doc(announcementId).update({
+                    likes: firebase.firestore.FieldValue.increment(1)
+                });
+                
+                showNotification('Annonce likée', 'success');
+                
+                // Notification à l'admin si l'utilisateur n'est pas admin
+                if (!isAdmin) {
+                    // Récupérer l'ID de l'admin (mickaelpcs14@gmail.com)
+                    db.collection('users')
+                        .where('email', '==', 'mickaelpcs14@gmail.com')
+                        .get()
+                        .then(querySnapshot => {
+                            if (!querySnapshot.empty) {
+                                const adminDoc = querySnapshot.docs[0];
+                                const adminId = adminDoc.id;
+                                
+                                // Utiliser la nouvelle structure de notifications
+                                return db.collection('users').doc(adminId).collection('notifications').add({
+                                    type: 'announcement_like',
+                                    message: `${userData.prenom} ${userData.nom} a aimé votre annonce "${announcement.title}"`,
+                                    announcementId: announcementId,
+                                    read: false,
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erreur lors de la création de la notification de like:', error);
+                        });
+                }
+            }
+            
+            // Mettre à jour la liste des annonces likées de l'utilisateur
+            db.collection('users').doc(currentUser.uid).update({
+                likedAnnouncements: newLikedAnnouncements
+            })
+            .then(() => {
+                userData.likedAnnouncements = newLikedAnnouncements;
+                // Mettre à jour le compteur de likes affiché
+                const likeCount = button.querySelector('.like-count');
+                const currentCount = parseInt(likeCount.textContent);
+                likeCount.textContent = isCurrentlyLiked ? currentCount - 1 : currentCount + 1;
+            })
+            .catch(error => {
+                console.error('Erreur lors de la mise à jour des likes:', error);
+                showNotification('Erreur lors de la mise à jour du like', 'error');
+            });
+        }
+
+        function submitAnnouncement() {
+            if (!isAdmin) {
+                showNotification('Action non autorisée', 'error');
+                return;
+            }
+            
+            const title = document.getElementById('announcement-title').value;
+            const content = document.getElementById('announcement-content').value;
+            
+            db.collection('announcements').add({
+                title: title,
+                content: content,
+                authorId: currentUser.uid,
+                authorName: `${userData.prenom} ${userData.nom}`,
+                likes: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                announcementForm.reset();
+                showNotification('Annonce publiée avec succès', 'success');
+            })
+            .catch(error => {
+                console.error('Erreur lors de la publication de l\'annonce:', error);
+                showNotification('Erreur lors de la publication de l\'annonce', 'error');
+            });
+        }
+
+        function loadRecentExams() {
+            const recentExamsContainer = document.getElementById('recent-exams');
+            recentExamsContainer.innerHTML = '<p>Chargement des épreuves récentes...</p>';
+            
+            db.collection('epreuves')
+                .where('status', '==', 'approved')
+                .orderBy('createdAt', 'desc')
+                .limit(10)
+                .get()
+                .then(querySnapshot => {
+                    recentExamsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        recentExamsContainer.innerHTML = '<p>Aucune épreuve récente trouvée.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        const examCard = createExamCard(exam, doc.id);
+                        recentExamsContainer.appendChild(examCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des épreuves récentes:', error);
+                    recentExamsContainer.innerHTML = '<p>Erreur lors du chargement des épreuves.</p>';
+                });
+        }
+
+        function loadAllExams() {
+            const examsContainer = document.getElementById('exams-list');
+            examsContainer.innerHTML = '<p>Chargement des épreuves...</p>';
+            
+            db.collection('epreuves')
+                .where('status', '==', 'approved')
+                .get()
+                .then(querySnapshot => {
+                    examsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        examsContainer.innerHTML = '<p>Aucune épreuve trouvée.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        const examCard = createExamCard(exam, doc.id);
+                        examsContainer.appendChild(examCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des épreuves:', error);
+                    examsContainer.innerHTML = '<p>Erreur lors du chargement des épreuves.</p>';
+                });
+        }
+
+        function applyFilters() {
+            const classFilter = filterClass.value;
+            const subjectFilter = filterSubject.value;
+            const seriesFilter = filterSeries.value;
+            const searchText = searchExams.value.toLowerCase();
+            
+            const examsContainer = document.getElementById('exams-list');
+            examsContainer.innerHTML = '<p>Filtrage des épreuves...</p>';
+            
+            let query = db.collection('epreuves').where('status', '==', 'approved');
+            
+            if (classFilter) {
+                query = query.where('classe', '==', classFilter);
+            }
+            
+            if (subjectFilter) {
+                query = query.where('matiere', '==', subjectFilter);
+            }
+            
+            if (seriesFilter) {
+                query = query.where('serie', '==', seriesFilter);
+            }
+            
+            query.get()
+                .then(querySnapshot => {
+                    examsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        examsContainer.innerHTML = '<p>Aucune épreuve trouvée avec ces critères.</p>';
+                        return;
+                    }
+                    
+                    let filteredExams = [];
+                    
+                    querySnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        exam.id = doc.id;
+                        
+                        if (searchText) {
+                            if (exam.nom_epreuve.toLowerCase().includes(searchText) || 
+                                exam.matiere.toLowerCase().includes(searchText) ||
+                                exam.classe.toLowerCase().includes(searchText)) {
+                                filteredExams.push(exam);
+                            }
+                        } else {
+                            filteredExams.push(exam);
+                        }
+                    });
+                    
+                    if (filteredExams.length === 0) {
+                        examsContainer.innerHTML = '<p>Aucune épreuve trouvée avec ces critères.</p>';
+                        return;
+                    }
+                    
+                    filteredExams.forEach(exam => {
+                        const examCard = createExamCard(exam, exam.id);
+                        examsContainer.appendChild(examCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du filtrage des épreuves:', error);
+                    examsContainer.innerHTML = '<p>Erreur lors du filtrage des épreuves.</p>';
+                });
+        }
+
+        function createExamCard(exam, examId) {
+            const card = document.createElement('div');
+            card.className = 'exam-card';
+            
+            const isFavorite = userData && userData.favorites && userData.favorites.includes(examId);
+            
+            card.innerHTML = `
+                <h3 class="exam-name">${exam.nom_epreuve}</h3>
+                <div class="exam-details">
+                    <p>Matière: ${exam.matiere}</p>
+                    <p>Classe: ${exam.classe}</p>
+                    <p>Série: ${exam.serie}</p>
+                    <p>Publié par: <span class="author-link" data-author-id="${exam.auteurId}">${exam.auteurNom || 'Utilisateur'}</span></p>
+                </div>
+                <div class="exam-actions">
+                    <button class="exam-btn view-btn" data-exam-id="${examId}" data-type="sujet">Voir l'épreuve</button>
+                    <a href="${exam.fichier_sujet}" download="${exam.nom_epreuve}_sujet.pdf" class="exam-btn download-btn">Télécharger</a>
+                    ${exam.fichier_corrige ? `<a href="${exam.fichier_corrige}" download="${exam.nom_epreuve}_corrige.pdf" class="exam-btn download-btn">Corrigé (2 points)</a>` : ''}
+                    <button class="exam-btn transfer-btn" data-exam-id="${examId}">Transférer</button>
+                    <button class="exam-btn favorite-btn ${isFavorite ? 'active' : ''}" data-exam-id="${examId}">
+                        <i class="${isFavorite ? 'fas' : 'far'} fa-heart"></i> Favori
+                    </button>
+                    ${isAdmin ? `<button class="exam-btn delete-btn" data-exam-id="${examId}">Supprimer</button>` : ''}
+                </div>
+            `;
+            
+            const viewBtn = card.querySelector('.view-btn');
+            viewBtn.addEventListener('click', () => {
+                viewExam(examId, 'sujet');
+            });
+            
+            const downloadBtns = card.querySelectorAll('.download-btn');
+            downloadBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // L'attribut download force le téléchargement automatique
+                    // On incrémente aussi le compteur de téléchargement
+                    const examRef = db.collection('epreuves').doc(examId);
+                    examRef.update({
+                        downloadCount: firebase.firestore.FieldValue.increment(1)
+                    });
+                    
+                    // Pour le corrigé, on gère la déduction de points
+                    if (btn.textContent.includes('Corrigé')) {
+                        e.preventDefault(); // On empêche le téléchargement immédiat
+                        handleCorrigeAccess(examId, exam, 'download');
+                    }
+                });
+            });
+            
+            const transferBtn = card.querySelector('.transfer-btn');
+            transferBtn.addEventListener('click', () => {
+                openTransferPopup(examId);
+            });
+            
+            const favoriteBtn = card.querySelector('.favorite-btn');
+            favoriteBtn.addEventListener('click', () => {
+                handleAddToFavorites(examId, exam.auteurId, favoriteBtn);
+            });
+            
+            if (isAdmin) {
+                const deleteBtn = card.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', () => {
+                    deleteExam(examId);
+                });
+            }
+            
+            const authorLink = card.querySelector('.author-link');
+            authorLink.addEventListener('click', () => {
+                viewUserProfile(exam.auteurId);
+            });
+            
+            return card;
+        }
+
+        async function handleAddToFavorites(epreuveId, auteurId, button) {
+            if (!userData) return;
+            
+            const isCurrentlyFavorite = userData.favorites && userData.favorites.includes(epreuveId);
+            
+            let newFavorites = userData.favorites ? [...userData.favorites] : [];
+            
+            if (isCurrentlyFavorite) {
+                // Retirer des favoris
+                newFavorites = newFavorites.filter(id => id !== epreuveId);
+                button.classList.remove('active');
+                button.innerHTML = '<i class="far fa-heart"></i> Favori';
+                showNotification('Épreuve retirée des favoris', 'success');
+            } else {
+                // Ajouter aux favoris
+                newFavorites.push(epreuveId);
+                button.classList.add('active');
+                button.innerHTML = '<i class="fas fa-heart"></i> Favori';
+                showNotification('Épreuve ajoutée aux favoris', 'success');
+                
+                try {
+                    // 1. Sauvegarde sur le Profil
+                    await db.collection('users').doc(currentUser.uid).update({
+                        favorites: newFavorites
+                    });
+                    
+                    userData.favorites = newFavorites;
+                    
+                    // 2. Notification de l'Auteur (si ce n'est pas l'utilisateur actuel)
+                    if (auteurId && auteurId !== currentUser.uid) {
+                        // Récupérer les détails de l'épreuve pour le message
+                        const examDoc = await db.collection('epreuves').doc(epreuveId).get();
+                        if (examDoc.exists) {
+                            const exam = examDoc.data();
+                            
+                            // Utiliser la nouvelle structure de notifications
+                            await db.collection('users').doc(auteurId).collection('notifications').add({
+                                type: 'favorite',
+                                message: `${userData.prenom} ${userData.nom} a ajouté votre épreuve "${exam.nom_epreuve}" à ses favoris`,
+                                examId: epreuveId,
+                                read: false,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    }
+                    
+                    // 3. Mise à jour de la Page Profil si active
+                    if (document.getElementById('profile-view').classList.contains('active')) {
+                        loadFavorites();
+                    }
+                    
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout aux favoris:', error);
+                    showNotification('Erreur lors de l\'ajout aux favoris', 'error');
+                }
+            }
+            
+            // Mettre à jour les favoris même en cas d'erreur de notification
+            if (isCurrentlyFavorite) {
+                db.collection('users').doc(currentUser.uid).update({
+                    favorites: newFavorites
+                })
+                .then(() => {
+                    userData.favorites = newFavorites;
+                    if (document.getElementById('profile-view').classList.contains('active')) {
+                        loadFavorites();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la mise à jour des favoris:', error);
+                    showNotification('Erreur lors de la mise à jour des favoris', 'error');
+                });
+            }
+        }
+
+        function viewExam(examId, type) {
+            db.collection('epreuves').doc(examId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const exam = doc.data();
+                        let fileUrl = '';
+                        
+                        if (type === 'sujet') {
+                            fileUrl = exam.fichier_sujet;
+                            if (fileUrl && fileUrl.includes('cloudinary.com')) {
+                                window.open(fileUrl, '_blank');
+                            } else {
+                                showNotification('Erreur: Fichier non disponible', 'error');
+                            }
+                        } else if (type === 'corrige') {
+                            handleCorrigeAccess(examId, exam, 'view');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la consultation:', error);
+                    showNotification('Erreur lors de la consultation', 'error');
+                });
+        }
+
+        function downloadExam(examId, type) {
+            db.collection('epreuves').doc(examId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const exam = doc.data();
+                        
+                        if (type === 'sujet') {
+                            const fileUrl = exam.fichier_sujet;
+                            if (fileUrl && fileUrl.includes('cloudinary.com')) {
+                                const link = document.createElement('a');
+                                link.href = fileUrl;
+                                link.download = `${exam.nom_epreuve}_sujet.pdf`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                
+                                // Incrémenter le compteur de téléchargement
+                                const examRef = db.collection('epreuves').doc(examId);
+                                examRef.update({
+                                    downloadCount: firebase.firestore.FieldValue.increment(1)
+                                });
+                                
+                            } else {
+                                showNotification('Erreur: Fichier non disponible', 'error');
+                            }
+                        } else if (type === 'corrige') {
+                            handleCorrigeAccess(examId, exam, 'download');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du téléchargement:', error);
+                    showNotification('Erreur lors du téléchargement', 'error');
+                });
+        }
+
+        function handleCorrigeAccess(examId, exam, action) {
+            db.collection('users').doc(currentUser.uid).get()
+                .then(userDoc => {
+                    const userData = userDoc.data();
+                    
+                    if (userData.points < 2) {
+                        showNotification('Points insuffisants. Vous avez besoin de 2 points pour accéder au corrigé', 'error');
+                        return;
+                    }
+                    
+                    // Déduire 2 points de l'utilisateur
+                    return db.collection('users').doc(currentUser.uid).update({
+                        points: firebase.firestore.FieldValue.increment(-2),
+                        examsDownloaded: firebase.firestore.FieldValue.increment(1)
+                    }).then(() => {
+                        // Ajouter 2 points à l'auteur si ce n'est pas le même utilisateur
+                        if (exam.auteurId && exam.auteurId !== currentUser.uid) {
+                            return db.collection('users').doc(exam.auteurId).update({
+                                points: firebase.firestore.FieldValue.increment(2)
+                            }).then(() => {
+                                // Utiliser la nouvelle structure de notifications
+                                return db.collection('users').doc(exam.auteurId).collection('notifications').add({
+                                    type: 'points_received',
+                                    message: `Vous avez reçu +2 points de ${userData.prenom} ${userData.nom} pour le ${action} de votre corrigé`,
+                                    examId: examId,
+                                    read: false,
+                                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            });
+                        }
+                    }).then(() => {
+                        // Incrémenter le compteur de téléchargement pour le corrigé aussi
+                        const examRef = db.collection('epreuves').doc(examId);
+                        examRef.update({
+                            downloadCount: firebase.firestore.FieldValue.increment(1)
+                        });
+                                
+                        // Accéder au fichier corrigé
+                        const fileUrl = exam.fichier_corrige;
+                        if (fileUrl && fileUrl.includes('cloudinary.com')) {
+                            if (action === 'view') {
+                                window.open(fileUrl, '_blank');
+                            } else {
+                                const link = document.createElement('a');
+                                link.href = fileUrl;
+                                link.download = `${exam.nom_epreuve}_corrige.pdf`;
+                                link.target = '_blank';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
+                            showNotification(`Corrigé ${action === 'view' ? 'consulté' : 'téléchargé'} avec succès (2 points déduits)`, 'success');
+                        } else {
+                            showNotification('Erreur: Fichier corrigé non disponible', 'error');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de l\'accès au corrigé:', error);
+                    showNotification('Erreur lors de l\'accès au corrigé', 'error');
+                });
+        }
+
+        function deleteExam(examId) {
+            if (!isAdmin) {
+                showNotification('Action non autorisée', 'error');
+                return;
+            }
+            
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette épreuve ?')) {
+                db.collection('epreuves').doc(examId).delete()
+                .then(() => {
+                    showNotification('Épreuve supprimée avec succès', 'success');
+                    if (document.getElementById('exams-view').classList.contains('active')) {
+                        loadAllExams();
+                    }
+                    if (document.getElementById('home-view').classList.contains('active')) {
+                        loadRecentExams();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la suppression:', error);
+                    showNotification('Erreur lors de la suppression de l\'épreuve', 'error');
+                });
+            }
+        }
+
+        function viewUserProfile(authorId) {
+            sessionStorage.setItem('viewingUserId', authorId);
+            switchView('profile');
+            loadUserProfile(authorId);
+        }
+
+        function loadUserProfile(userId) {
+            if (userId === currentUser.uid) {
+                loadProfileData();
+                return;
+            }
+            
+            db.collection('users').doc(userId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const userProfile = doc.data();
+                        
+                        document.getElementById('profile-avatar').textContent = 
+                            userProfile.prenom ? userProfile.prenom.charAt(0).toUpperCase() : 'U';
+                        document.getElementById('profile-name').textContent = 
+                            `${userProfile.prenom} ${userProfile.nom}`;
+                        document.getElementById('profile-email').textContent = userProfile.email;
+                        document.getElementById('profile-class').textContent = 
+                            `Classe: ${userProfile.classe || 'Non définie'}`;
+                        
+                        document.getElementById('points-balance').textContent = userProfile.points || 0;
+                        document.getElementById('exams-uploaded').textContent = userProfile.examsUploaded || 0;
+                        document.getElementById('exams-downloaded').textContent = userProfile.examsDownloaded || 0;
+                        
+                        // Vérifier l'existence des éléments avant de modifier leur style
+                        const profileForm = document.getElementById('profile-form');
+                        const favoritesList = document.getElementById('favorites-list');
+                        const cardTitle = document.querySelector('#profile-view .card:nth-of-type(2) .card-title');
+                        const logoutBtn = document.getElementById('logout-btn');
+                        
+                        if (profileForm) profileForm.style.display = 'none';
+                        if (favoritesList) favoritesList.style.display = 'none';
+                        if (cardTitle) cardTitle.style.display = 'none';
+                        if (logoutBtn) logoutBtn.style.display = 'none';
+
+                        showNotification(`Profil de ${userProfile.prenom} ${userProfile.nom}`, 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement du profil:', error);
+                    showNotification('Erreur lors du chargement du profil', 'error');
+                });
+        }
+
+        function openTransferPopup(examId) {
+            transferPopup.style.display = 'flex';
+            transferPopup.setAttribute('data-exam-id', examId);
+            
+            const userSearch = document.getElementById('user-search');
+            userSearch.addEventListener('input', debounce(() => {
+                searchUsersByEmail(userSearch.value);
+            }, 300));
+            
+            document.getElementById('send-transfer-btn').addEventListener('click', () => {
+                const selectedUser = document.querySelector('.user-result.selected');
+                
+                if (!selectedUser) {
+                    showNotification('Veuillez sélectionner un utilisateur', 'warning');
+                    return;
+                }
+                
+                const recipientId = selectedUser.getAttribute('data-user-id');
+                sendTransfer(examId, recipientId);
+            });
+        }
+
+        function searchUsersByEmail(query) {
+            const resultsContainer = document.getElementById('search-results-list');
+            resultsContainer.innerHTML = '<p>Recherche en cours...</p>';
+            
+            if (!query || query.length < 3) {
+                resultsContainer.innerHTML = '<p>Entrez au moins 3 caractères pour rechercher</p>';
+                return;
+            }
+            
+            db.collection('users')
+                .where('email', '>=', query)
+                .where('email', '<=', query + '\uf8ff')
+                .limit(10)
+                .get()
+                .then(querySnapshot => {
+                    resultsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        resultsContainer.innerHTML = '<p>Aucun utilisateur trouvé.</p>';
+                        return;
+                    }
+                    
+                    let foundUsers = false;
+                    
+                    querySnapshot.forEach(doc => {
+                        const user = doc.data();
+                        if (doc.id !== currentUser.uid) {
+                            const userElement = document.createElement('div');
+                            userElement.className = 'user-result';
+                            userElement.setAttribute('data-user-id', doc.id);
+                            userElement.innerHTML = `
+                                <p>${user.prenom} ${user.nom} - ${user.email}</p>
+                            `;
+                            
+                            userElement.addEventListener('click', () => {
+                                document.querySelectorAll('.user-result').forEach(el => {
+                                    el.classList.remove('selected');
+                                });
+                                userElement.classList.add('selected');
+                            });
+                            
+                            resultsContainer.appendChild(userElement);
+                            foundUsers = true;
+                        }
+                    });
+                    
+                    if (!foundUsers) {
+                        resultsContainer.innerHTML = '<p>Aucun utilisateur trouvé.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la recherche d\'utilisateurs:', error);
+                    resultsContainer.innerHTML = '<p>Erreur lors de la recherche. Vérifiez votre connexion.</p>';
+                });
+        }
+
+        function sendTransfer(examId, recipientId) {
+            db.collection('epreuves').doc(examId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const exam = doc.data();
+                        
+                        // Utiliser la nouvelle structure de notifications
+                        return db.collection('users').doc(recipientId).collection('notifications').add({
+                            type: 'transfer',
+                            message: `${userData.prenom} ${userData.nom} vous a transféré l'épreuve "${exam.nom_epreuve}"`,
+                            examId: examId,
+                            read: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                })
+                .then(() => {
+                    transferPopup.style.display = 'none';
+                    showNotification('Épreuve transférée avec succès', 'success');
+                })
+                .catch(error => {
+                    console.error('Erreur lors du transfert:', error);
+                    showNotification('Erreur lors du transfert', 'error');
+                });
+        }
+
+        function submitExam() {
+            const matiere = document.getElementById('exam-matiere').value;
+            const classe = document.getElementById('exam-classe').value;
+            const serie = document.getElementById('exam-serie').value;
+            const nom_epreuve = document.getElementById('exam-nom').value;
+            const fichier_sujet = document.getElementById('exam-sujet-url').value;
+            const fichier_corrige = document.getElementById('exam-corrige-url').value;
+            
+            if (!fichier_sujet) {
+                showNotification('Veuillez télécharger un fichier sujet', 'warning');
+                return;
+            }
+            
+            if (!fichier_sujet.includes('cloudinary.com') || !fichier_sujet.includes('.pdf')) {
+                showNotification('Erreur: Le fichier sujet n\'est pas valide', 'error');
+                return;
+            }
+            
+            if (fichier_corrige && (!fichier_corrige.includes('cloudinary.com') || !fichier_corrige.includes('.pdf'))) {
+                showNotification('Erreur: Le fichier corrigé n\'est pas valide', 'error');
+                return;
+            }
+            
+            const status = isAdmin ? 'approved' : 'pending';
+            
+            db.collection('users').doc(currentUser.uid).get()
+                .then(userDoc => {
+                    const userData = userDoc.data();
+                    
+                    return db.collection('epreuves').add({
+                        matiere: matiere,
+                        classe: classe,
+                        serie: serie,
+                        nom_epreuve: nom_epreuve,
+                        fichier_sujet: fichier_sujet,
+                        fichier_corrige: fichier_corrige || null,
+                        auteurId: currentUser.uid,
+                        auteurNom: `${userData.prenom} ${userData.nom}`,
+                        status: status,
+                        downloadCount: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    addExamPopup.style.display = 'none';
+                    addExamForm.reset();
+                    document.getElementById('sujet-upload').innerHTML = '<p>Cliquez pour télécharger le fichier sujet</p>';
+                    document.getElementById('corrige-upload').innerHTML = '<p>Cliquez pour télécharger le fichier corrigé</p>';
+                    
+                    if (isAdmin) {
+                        showNotification('Épreuve publiée avec succès', 'success');
+                        assignPointsAfterApproval(currentUser.uid, fichier_corrige ? 4 : 2);
+                    } else {
+                        showNotification('Épreuve soumise avec succès, en attente d\'approbation', 'success');
+                        
+                        // Notifier les administrateurs
+                        notifyAdminsAboutPendingExam();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la soumission de l\'épreuve:', error);
+                    showNotification('Erreur lors de la soumission de l\'épreuve', 'error');
+                });
+        }
+
+        function submitCorrigeOnly() {
+            const examId = document.getElementById('corrige-exam-select').value;
+            const fichier_corrige = document.getElementById('corrige-only-url').value;
+            
+            if (!examId) {
+                showNotification('Veuillez sélectionner une épreuve', 'warning');
+                return;
+            }
+            
+            if (!fichier_corrige) {
+                showNotification('Veuillez télécharger un fichier corrigé', 'warning');
+                return;
+            }
+            
+            if (!fichier_corrige.includes('cloudinary.com') || !fichier_corrige.includes('.pdf')) {
+                showNotification('Erreur: Le fichier corrigé n\'est pas valide', 'error');
+                return;
+            }
+            
+            // Vérifier que l'utilisateur est l'auteur de l'épreuve
+            db.collection('epreuves').doc(examId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const exam = doc.data();
+                        
+                        if (exam.auteurId !== currentUser.uid) {
+                            showNotification('Vous ne pouvez ajouter un corrigé que pour vos propres épreuves', 'error');
+                            return;
+                        }
+                        
+                        // Mettre à jour l'épreuve avec le nouveau corrigé
+                        return db.collection('epreuves').doc(examId).update({
+                            fichier_corrige: fichier_corrige
+                        });
+                    } else {
+                        showNotification('Épreuve non trouvée', 'error');
+                    }
+                })
+                .then(() => {
+                    addCorrigeOnlyPopup.style.display = 'none';
+                    addCorrigeOnlyForm.reset();
+                    document.getElementById('corrige-only-upload').innerHTML = '<p>Cliquez pour télécharger le fichier corrigé</p>';
+                    
+                    showNotification('Corrigé ajouté avec succès', 'success');
+                    
+                    // Si l'admin, attribuer les points supplémentaires
+                    if (isAdmin) {
+                        assignPointsAfterApproval(currentUser.uid, 2); // 2 points supplémentaires pour le corrigé
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de l\'ajout du corrigé:', error);
+                    showNotification('Erreur lors de l\'ajout du corrigé', 'error');
+                });
+        }
+
+        function loadExistingExamsForCorrige() {
+            const examSelect = document.getElementById('corrige-exam-select');
+            examSelect.innerHTML = '<option value="">Sélectionnez une épreuve existante</option>';
+            
+            // Charger seulement les épreuves de l'utilisateur actuel qui n'ont pas de corrigé
+            db.collection('epreuves')
+                .where('auteurId', '==', currentUser.uid)
+                .where('fichier_corrige', '==', null)
+                .where('status', '==', 'approved')
+                .get()
+                .then(querySnapshot => {
+                    querySnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${exam.nom_epreuve} - ${exam.matiere} - ${exam.classe}`;
+                        examSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des épreuves:', error);
+                });
+        }
+
+        function notifyAdminsAboutPendingExam() {
+            // Récupérer tous les administrateurs
+            db.collection('users')
+                .where('role', '==', 'admin')
+                .get()
+                .then(querySnapshot => {
+                    querySnapshot.forEach(doc => {
+                        const admin = doc.data();
+                        // Utiliser la nouvelle structure de notifications
+                        db.collection('users').doc(doc.id).collection('notifications').add({
+                            type: 'pending_exam',
+                            message: `Une nouvelle épreuve est en attente d'approbation`,
+                            read: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la notification des admins:', error);
+                });
+        }
+
+        function loadNotifications() {
+            const notificationsContainer = document.getElementById('notifications-list');
+            notificationsContainer.innerHTML = '<p>Chargement des notifications...</p>';
+            
+            db.collection('users').doc(currentUser.uid)
+                .collection('notifications')
+                .orderBy('createdAt', 'desc')
+                .limit(50)
+                .get()
+                .then(querySnapshot => {
+                    notificationsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        notificationsContainer.innerHTML = '<p>Aucune notification.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const notification = doc.data();
+                        const notificationElement = document.createElement('div');
+                        notificationElement.className = 'notification-item';
+                        notificationElement.setAttribute('data-notification-id', doc.id);
+                        
+                        let icon = 'fas fa-bell';
+                        if (notification.type === 'economy' || notification.type === 'points_received') icon = 'fas fa-coins';
+                        else if (notification.type === 'transfer') icon = 'fas fa-paper-plane';
+                        else if (notification.type === 'submission') icon = 'fas fa-file-upload';
+                        else if (notification.type === 'favorite') icon = 'fas fa-heart';
+                        else if (notification.type === 'approval') icon = 'fas fa-check-circle';
+                        else if (notification.type === 'announcement_like') icon = 'fas fa-heart';
+                        else if (notification.type === 'pending_exam') icon = 'fas fa-clock';
+                        
+                        notificationElement.innerHTML = `
+                            <div class="notification-icon"><i class="${icon}"></i></div>
+                            <div class="notification-content">
+                                <p>${notification.message}</p>
+                                <small>${new Date(notification.createdAt?.toDate()).toLocaleDateString('fr-FR', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}</small>
+                            </div>
+                            <div class="notification-actions">
+                                <button class="notification-delete" data-notification-id="${doc.id}">×</button>
+                            </div>
+                        `;
+                        
+                        // Gestionnaire pour la suppression individuelle
+                        const deleteBtn = notificationElement.querySelector('.notification-delete');
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteNotification(doc.id);
+                        });
+                        
+                        // Gestionnaire pour le clic sur la notification
+                        if (notification.examId) {
+                            notificationElement.addEventListener('click', () => {
+                                db.collection('users').doc(currentUser.uid).collection('notifications').doc(doc.id).update({
+                                    read: true
+                                });
+                                switchView('exams');
+                            });
+                        } else {
+                            notificationElement.addEventListener('click', () => {
+                                db.collection('users').doc(currentUser.uid).collection('notifications').doc(doc.id).update({
+                                    read: true
+                                });
+                            });
+                        }
+                        
+                        notificationsContainer.appendChild(notificationElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des notifications:', error);
+                    notificationsContainer.innerHTML = '<p>Erreur lors du chargement des notifications.</p>';
+                });
+        }
+
+        function deleteNotification(notificationId) {
+            db.collection('users').doc(currentUser.uid).collection('notifications').doc(notificationId).delete()
+                .then(() => {
+                    showNotification('Notification supprimée', 'success');
+                    loadNotifications();
+                    updateNotificationBadge();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la suppression de la notification:', error);
+                    showNotification('Erreur lors de la suppression', 'error');
+                });
+        }
+
+        function deleteAllNotifications() {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer toutes vos notifications ?')) {
+                return;
+            }
+            
+            db.collection('users').doc(currentUser.uid).collection('notifications')
+                .get()
+                .then(querySnapshot => {
+                    const deletePromises = [];
+                    querySnapshot.forEach(doc => {
+                        deletePromises.push(db.collection('users').doc(currentUser.uid).collection('notifications').doc(doc.id).delete());
+                    });
+                    return Promise.all(deletePromises);
+                })
+                .then(() => {
+                    showNotification('Toutes les notifications ont été supprimées', 'success');
+                    loadNotifications();
+                    updateNotificationBadge();
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la suppression des notifications:', error);
+                    showNotification('Erreur lors de la suppression des notifications', 'error');
+                });
+        }
+
+        function updateNotificationBadge() {
+            if (!currentUser) return;
+            
+            db.collection('users').doc(currentUser.uid).collection('notifications')
+                .where('read', '==', false)
+                .get()
+                .then(querySnapshot => {
+                    const unreadCount = querySnapshot.size;
+                    const notificationIcon = document.querySelector('.nav-icon[data-view="notifications"]');
+                    
+                    let badge = notificationIcon.querySelector('.notification-badge');
+
+                    if (unreadCount > 0) {
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'notification-badge';
+                            notificationIcon.appendChild(badge);
+                        }
+                        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    } else {
+                        if (badge) {
+                            badge.remove();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du comptage des notifications:', error);
+                });
+        }
+
+        function loadProfileData() {
+            const viewingUserId = sessionStorage.getItem('viewingUserId');
+            if (viewingUserId && viewingUserId !== currentUser.uid) {
+                loadUserProfile(viewingUserId);
+                sessionStorage.removeItem('viewingUserId');
+                return;
+            }
+            
+            db.collection('users').doc(currentUser.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        userData = doc.data();
+                        
+                        // Mettre à jour le Profil
+                        document.getElementById('profile-avatar').textContent = 
+                            userData.prenom ? userData.prenom.charAt(0).toUpperCase() : 'U';
+                        document.getElementById('profile-name').textContent = 
+                            `${userData.prenom} ${userData.nom}`;
+                        document.getElementById('profile-email').textContent = userData.email;
+                        document.getElementById('profile-class').textContent = 
+                            `Classe: ${userData.classe || 'Non définie'}`;
+                        
+                        document.getElementById('points-balance').textContent = userData.points || 0;
+                        document.getElementById('exams-uploaded').textContent = userData.examsUploaded || 0;
+                        document.getElementById('exams-downloaded').textContent = userData.examsDownloaded || 0;
+                        
+                        document.getElementById('edit-nom').value = userData.nom || '';
+                        document.getElementById('edit-prenom').value = userData.prenom || '';
+                        document.getElementById('edit-classe').value = userData.classe || '';
+                        
+                        // Mettre à jour le message d'accueil
+                        if (welcomeMessage && welcomeSubtitle) {
+                            welcomeMessage.textContent = `Bienvenue sur HosBac, ${userData.prenom || 'Utilisateur'} !`;
+                            welcomeSubtitle.textContent = 'Prêt à trouver la bonne épreuve ?';
+                        }
+                        
+                        document.getElementById('home-points-balance').textContent = userData.points || 0;
+                        document.getElementById('home-exams-uploaded').textContent = userData.examsUploaded || 0;
+                        document.getElementById('home-exams-downloaded').textContent = userData.examsDownloaded || 0;
+
+                        // Vérifier l'existence des éléments avant de modifier leur style
+                        const profileForm = document.getElementById('profile-form');
+                        const favoritesList = document.getElementById('favorites-list');
+                        const cardTitle = document.querySelector('#profile-view .card:nth-of-type(2) .card-title');
+                        const logoutBtn = document.getElementById('logout-btn');
+                        
+                        if (profileForm) profileForm.style.display = 'block';
+                        if (favoritesList) favoritesList.style.display = 'grid';
+                        if (cardTitle) cardTitle.style.display = 'block';
+                        if (logoutBtn) logoutBtn.style.display = 'block';
+
+                        loadFavorites();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement du profil:', error);
+                });
+        }
+
+        function updateProfile() {
+            const nom = document.getElementById('edit-nom').value;
+            const prenom = document.getElementById('edit-prenom').value;
+            const classe = document.getElementById('edit-classe').value;
+            
+            db.collection('users').doc(currentUser.uid).update({
+                nom: nom,
+                prenom: prenom,
+                classe: classe
+            })
+            .then(() => {
+                showNotification('Profil mis à jour avec succès', 'success');
+                loadProfileData();
+            })
+            .catch(error => {
+                console.error('Erreur lors de la mise à jour du profil:', error);
+                showNotification('Erreur lors de la mise à jour du profil', 'error');
+            });
+        }
+
+        // Fonction améliorée pour charger les favoris
+        function loadFavorites() {
+            const favoritesContainer = document.getElementById('favorites-list');
+            favoritesContainer.innerHTML = '<p>Chargement des favoris...</p>';
+            
+            if (!userData || !userData.favorites || userData.favorites.length === 0) {
+                favoritesContainer.innerHTML = '<p>Aucun favori pour le moment.</p>';
+                return;
+            }
+            
+            const favoritePromises = userData.favorites.map(examId => 
+                db.collection('epreuves').doc(examId).get()
+            );
+            
+            Promise.all(favoritePromises)
+                .then(docs => {
+                    favoritesContainer.innerHTML = '';
+                    
+                    let hasFavorites = false;
+                    
+                    docs.forEach(doc => {
+                        if (doc.exists) {
+                            const exam = doc.data();
+                            const examCard = createExamCard(exam, doc.id);
+                            favoritesContainer.appendChild(examCard);
+                            hasFavorites = true;
+                        }
+                    });
+                    
+                    if (!hasFavorites) {
+                        favoritesContainer.innerHTML = '<p>Aucun favori pour le moment.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des favoris:', error);
+                    favoritesContainer.innerHTML = '<p>Erreur lors du chargement des favoris.</p>';
+                });
+        }
+
+        function performGlobalSearch(query) {
+            if (!query || query.length < 2) {
+                searchResults.innerHTML = '<p>Entrez au moins 2 caractères pour rechercher</p>';
+                return;
+            }
+            
+            searchResults.innerHTML = '<p>Recherche en cours...</p>';
+            
+            const examsPromise = db.collection('epreuves')
+                .where('status', '==', 'approved')
+                .where('nom_epreuve', '>=', query)
+                .where('nom_epreuve', '<=', query + '\uf8ff')
+                .limit(10)
+                .get()
+                .catch(error => {
+                    console.error('Erreur recherche épreuves:', error);
+                    return { empty: true };
+                });
+            
+            const usersPromise = db.collection('users')
+                .where('nom', '>=', query)
+                .where('nom', '<=', query + '\uf8ff')
+                .limit(10)
+                                .get()
+                .catch(error => {
+                    console.error('Erreur recherche utilisateurs:', error);
+                    return { empty: true };
+                });
+            
+            Promise.all([examsPromise, usersPromise])
+                .then(([examsSnapshot, usersSnapshot]) => {
+                    searchResults.innerHTML = '';
+                    
+                    let hasResults = false;
+                    
+                    if (examsSnapshot && !examsSnapshot.empty) {
+                        const examsTitle = document.createElement('h3');
+                        examsTitle.textContent = 'Épreuves';
+                        searchResults.appendChild(examsTitle);
+                        
+                        examsSnapshot.forEach(doc => {
+                            const exam = doc.data();
+                            const resultItem = document.createElement('div');
+                            resultItem.className = 'search-result-item';
+                            resultItem.innerHTML = `
+                                <p><strong>${exam.nom_epreuve}</strong> - ${exam.matiere} - ${exam.classe}</p>
+                                <small>Publié par: ${exam.auteurNom}</small>
+                            `;
+                            resultItem.addEventListener('click', () => {
+                                switchView('exams');
+                            });
+                            searchResults.appendChild(resultItem);
+                            hasResults = true;
+                        });
+                    }
+                    
+                    if (usersSnapshot && !usersSnapshot.empty) {
+                        const usersTitle = document.createElement('h3');
+                        usersTitle.textContent = 'Utilisateurs';
+                        usersTitle.style.marginTop = '1.5rem';
+                        searchResults.appendChild(usersTitle);
+                        
+                        usersSnapshot.forEach(doc => {
+                            const user = doc.data();
+                            if (doc.id !== currentUser.uid) {
+                                const resultItem = document.createElement('div');
+                                resultItem.className = 'search-result-item';
+                                resultItem.innerHTML = `
+                                    <p><strong>${user.prenom} ${user.nom}</strong> - ${user.email}</p>
+                                    <small>${user.ecole || ''} - ${user.classe || ''}</small>
+                                `;
+                                resultItem.addEventListener('click', () => {
+                                    viewUserProfile(doc.id);
+                                });
+                                searchResults.appendChild(resultItem);
+                                hasResults = true;
+                            }
+                        });
+                    }
+                    
+                    if (!hasResults) {
+                        searchResults.innerHTML = '<p>Aucun résultat trouvé.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la recherche globale:', error);
+                    searchResults.innerHTML = '<p>Erreur lors de la recherche. Vérifiez votre connexion.</p>';
+                });
+        }
+
+        function loadAdminPanel() {
+            if (!isAdmin) {
+                showNotification('Accès non autorisé', 'error');
+                switchView('home');
+                return;
+            }
+            
+            // Charger les statistiques
+            db.collection('users').get()
+                .then(querySnapshot => {
+                    document.getElementById('total-users').textContent = querySnapshot.size;
+                });
+                
+            db.collection('epreuves').get()
+                .then(querySnapshot => {
+                    document.getElementById('total-exams').textContent = querySnapshot.size;
+                });
+                
+            updatePendingExamsCount();
+            loadPendingExams();
+            renderAdminCharts();
+        }
+        
+        function loadPendingExams() {
+            const pendingExamsContainer = document.getElementById('pending-exams-list');
+            pendingExamsContainer.innerHTML = '<p>Chargement des épreuves en attente...</p>';
+            
+            db.collection('epreuves').where('status', '==', 'pending').get()
+                .then(querySnapshot => {
+                    pendingExamsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        pendingExamsContainer.innerHTML = '<p>Aucune épreuve en attente.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        const examElement = document.createElement('div');
+                        examElement.className = 'card';
+                        examElement.innerHTML = `
+                            <h3 class="card-title">${exam.nom_epreuve}</h3>
+                            <p>Matière: ${exam.matiere} | Classe: ${exam.classe} | Série: ${exam.serie}</p>
+                            <p>Publié par: ${exam.auteurNom}</p>
+                            <p>Sujet: ${exam.fichier_sujet ? '✓' : '✗'} | Corrigé: ${exam.fichier_corrige ? '✓' : '✗'}</p>
+                            <div class="exam-actions-admin">
+                                <button class="approve-btn" data-exam-id="${doc.id}">Approuver</button>
+                                <button class="reject-btn" data-exam-id="${doc.id}">Rejeter</button>
+                            </div>
+                        `;
+                        
+                        pendingExamsContainer.appendChild(examElement);
+                        
+                        examElement.querySelector('.approve-btn').addEventListener('click', () => {
+                            const points = exam.fichier_corrige ? 4 : 2;
+                            approveExam(doc.id, exam.auteurId, points);
+                        });
+                        
+                        examElement.querySelector('.reject-btn').addEventListener('click', () => {
+                            rejectExam(doc.id, exam.auteurId);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des épreuves en attente:', error);
+                    pendingExamsContainer.innerHTML = '<p>Erreur lors du chargement des épreuves en attente.</p>';
+                });
+        }
+        
+        function updatePendingExamsCount() {
+            if (!isAdmin) return;
+            
+            db.collection('epreuves').where('status', '==', 'pending').get()
+                .then(querySnapshot => {
+                    document.getElementById('pending-exams-count').textContent = querySnapshot.size;
+                })
+                .catch(error => {
+                    console.error('Erreur lors du comptage des épreuves en attente:', error);
+                });
+        }
+        
+        // Fonction renderAdminCharts modifiée pour gérer les instances de graphiques
+        async function renderAdminCharts() {
+            try {
+                // Détruire les anciennes instances de graphiques si elles existent
+                if (usersChartInstance) {
+                    usersChartInstance.destroy();
+                    usersChartInstance = null;
+                }
+                
+                if (examsChartInstance) {
+                    examsChartInstance.destroy();
+                    examsChartInstance = null;
+                }
+
+                // Graphique Utilisateurs - Récupération des données corrigée
+                const usersSnapshot = await db.collection('users').get();
+                const userCountsByDate = {};
+                const today = new Date();
+                
+                // Initialiser les 7 derniers jours
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(today.getDate() - i);
+                    const dateString = d.toISOString().split('T')[0];
+                    userCountsByDate[dateString] = 0;
+                }
+
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    if (user.createdAt && user.createdAt.toDate) {
+                        const userDate = user.createdAt.toDate();
+                        const dateString = userDate.toISOString().split('T')[0];
+                        
+                        // Vérifier si la date est dans les 7 derniers jours
+                        const userDateObj = new Date(dateString);
+                        const weekAgo = new Date();
+                        weekAgo.setDate(today.getDate() - 7);
+                        
+                        if (userDateObj >= weekAgo && userDateObj <= today) {
+                            if (userCountsByDate[dateString] !== undefined) {
+                                userCountsByDate[dateString]++;
+                            }
+                        }
+                    }
+                });
+
+                const userLabels = Object.keys(userCountsByDate);
+                const userDataPoints = Object.values(userCountsByDate);
+                
+                // Rendu Graphique Utilisateurs (Line)
+                const usersCtx = document.getElementById('users-chart');
+                if (usersCtx) {
+                    // Stocker la nouvelle instance du graphique
+                    usersChartInstance = new Chart(usersCtx, {
+                        type: 'line',
+                        data: {
+                            labels: userLabels,
+                            datasets: [{
+                                label: 'Nouveaux utilisateurs',
+                                data: userDataPoints,
+                                borderColor: 'var(--primary-blue)',
+                                backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                                fill: true,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Graphique Épreuves - Gestion d'erreur améliorée
+                try {
+                    const examsSnapshot = await db.collection('epreuves')
+                                                .where('status', '==', 'approved')
+                                                .orderBy('downloadCount', 'desc')
+                                                .limit(5)
+                                                .get();
+                                                
+                    const examLabels = [];
+                    const examDataPoints = [];
+                    
+                    examsSnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        const shortName = exam.nom_epreuve.length > 20 ? 
+                            exam.nom_epreuve.substring(0, 20) + '...' : exam.nom_epreuve;
+                        examLabels.push(shortName);
+                        examDataPoints.push(exam.downloadCount || 0);
+                    });
+
+                    // Rendu Graphique Épreuves (Bar)
+                    const examsCtx = document.getElementById('exams-chart');
+                    if (examsCtx) {
+                        // Stocker la nouvelle instance du graphique
+                        examsChartInstance = new Chart(examsCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: examLabels,
+                                datasets: [{
+                                    label: 'Téléchargements',
+                                    data: examDataPoints,
+                                    backgroundColor: 'var(--secondary-blue)',
+                                }]
+                            },
+                            options: {
+                                indexAxis: 'y',
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch (chartError) {
+                    console.error("Erreur lors de la génération du graphique épreuves:", chartError);
+                    const examsChartContainer = document.getElementById('exams-chart');
+                    if (examsChartContainer) {
+                        examsChartContainer.parentElement.innerHTML = `
+                            <p>Erreur chargement graphique épreuves.</p>
+                            <p><small>Cette erreur est normale et est causée par un index composite manquant dans Firestore.</small></p>
+                            <p><small>Pour résoudre ce problème :</small></p>
+                            <ol style="text-align: left; font-size: 0.8rem;">
+                                <li>Allez sur la page /admin</li>
+                                <li>Ouvrez la console F12 (Inspecteur)</li>
+                                <li>Cliquez sur le lien d'erreur dans la console pour créer automatiquement l'index</li>
+                            </ol>
+                        `;
+                    }
+                }
+
+            } catch (error) {
+                console.error("Erreur lors de la génération des graphiques:", error);
+                // Message d'erreur plus informatif
+                const usersChartContainer = document.getElementById('users-chart');
+                const examsChartContainer = document.getElementById('exams-chart');
+                
+                if (usersChartContainer) {
+                    usersChartContainer.parentElement.innerHTML = `
+                        <p>Erreur chargement graphique utilisateurs.</p>
+                        <p><small>Si le problème persiste, vérifiez votre connexion.</small></p>
+                    `;
+                }
+                
+                if (examsChartContainer) {
+                    examsChartContainer.parentElement.innerHTML = `
+                        <p>Erreur chargement graphique épreuves.</p>
+                        <p><small>Cette erreur est normale et est causée par un index composite manquant dans Firestore.</small></p>
+                        <p><small>Pour résoudre ce problème :</small></p>
+                        <ol style="text-align: left; font-size: 0.8rem;">
+                            <li>Allez sur la page /admin</li>
+                            <li>Ouvrez la console F12 (Inspecteur)</li>
+                            <li>Cliquez sur le lien d'erreur dans la console pour créer automatiquement l'index</li>
+                        </ol>
+                    `;
+                }
+            }
+        }
+
+        function approveExam(examId, authorId, points) {
+            db.collection('epreuves').doc(examId).update({
+                status: 'approved'
+            })
+            .then(() => {
+                return assignPointsAfterApproval(authorId, points);
+            })
+            .then(() => {
+                // Utiliser la nouvelle structure de notifications
+                return db.collection('users').doc(authorId).collection('notifications').add({
+                    type: 'approval',
+                    message: `Votre épreuve a été approuvée ! Vous avez reçu ${points} points ${points === 4 ? '(2 pour le sujet + 2 pour le corrigé)' : '(2 pour le sujet)'}.`,
+                    examId: examId,
+                    read: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                showNotification('Épreuve approuvée avec succès', 'success');
+                loadAdminPanel();
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'approbation de l\'épreuve:', error);
+                showNotification('Erreur lors de l\'approbation de l\'épreuve', 'error');
+            });
+        }
+
+        function assignPointsAfterApproval(authorId, points) {
+            return db.collection('users').doc(authorId).update({
+                points: firebase.firestore.FieldValue.increment(points),
+                examsUploaded: firebase.firestore.FieldValue.increment(1)
+            });
+        }
+
+        function rejectExam(examId, authorId) {
+            db.collection('epreuves').doc(examId).delete()
+            .then(() => {
+                // Utiliser la nouvelle structure de notifications
+                return db.collection('users').doc(authorId).collection('notifications').add({
+                    type: 'submission',
+                    message: 'Votre épreuve a été rejetée.',
+                    read: false,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                showNotification('Épreuve rejetée', 'success');
+                loadAdminPanel();
+            })
+            .catch(error => {
+                console.error('Erreur lors du rejet de l\'épreuve:', error);
+                showNotification('Erreur lors du rejet de l\'épreuve', 'error');
+            });
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            `;
+            
+            if (type === 'success') {
+                notification.style.background = 'var(--success)';
+            } else if (type === 'error') {
+                notification.style.background = 'var(--error)';
+            } else if (type === 'warning') {
+                notification.style.background = 'var(--warning)';
+            } else {
+                notification.style.background = 'var(--primary-blue)';
+            }
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // Fonction debounce pour limiter les appels API
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Ajouter des styles CSS pour les animations de notification
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
