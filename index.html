@@ -1300,64 +1300,6 @@
             transform: translateY(-2px);
         }
 
-        /* Style pour le bouton de thème */
-        #theme-toggle-btn .fa-sun { display: none; }
-        .theme-dark #theme-toggle-btn .fa-sun { display: inline-block; }
-        .theme-dark #theme-toggle-btn .fa-moon { display: none; }
-
-        /* Thème Sombre (Noir) */
-        body.theme-dark {
-            background: #121212;
-            color: #e0e0e0;
-        }
-        body.theme-dark .card,
-        body.theme-dark .popup-content,
-        body.theme-dark .auth-container,
-        body.theme-dark header,
-        body.theme-dark footer {
-            background: rgba(40, 40, 40, 0.7); /* Glassmorphism sombre */
-            backdrop-filter: blur(10px);
-            border-color: rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
-        }
-        body.theme-dark .view-title,
-        body.theme-dark .card-title,
-        body.theme-dark .logo,
-        body.theme-dark .footer-link {
-            color: #ffffff;
-        }
-        body.theme-dark .text-light {
-            color: #a0a0a0;
-        }
-        body.theme-dark .search-bar,
-        body.theme-dark .filter-select,
-        body.theme-dark .form-group input,
-        body.theme-dark .form-group select {
-            background: rgba(60, 60, 60, 0.7);
-            color: #e0e0e0;
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-        body.theme-dark .exam-card {
-            background: rgba(40, 40, 40, 0.7);
-        }
-        body.theme-dark .notification-item:hover,
-        body.theme-dark .search-result-item:hover {
-            background: rgba(60, 60, 60, 0.5);
-        }
-        body.theme-dark .header-center .nav-icon.active {
-            background: rgba(30, 58, 138, 0.5);
-            color: #ffffff;
-        }
-        body.theme-dark .header-right .nav-icon {
-            background: rgba(60, 60, 60, 0.7);
-        }
-        body.theme-dark .header-right .nav-icon.active {
-            background: var(--primary-blue);
-        }
-        body.theme-dark .mobile-nav-icon.active {
-            background: rgba(30, 58, 138, 0.5);
-        }
-
         /* Animations */
         @keyframes slideUp {
             from { transform: translateY(50px); opacity: 0; }
@@ -1624,11 +1566,9 @@
                     <div class="nav-icon active" data-view="home" title="Accueil"><i class="fas fa-home"></i></div>
                     <div class="nav-icon" data-view="exams" title="Examens"><i class="fas fa-file-alt"></i></div>
                     <div class="nav-icon" data-view="search" title="Recherche"><i class="fas fa-search"></i></div>
+                    <div class="nav-icon" data-view="leaderboard" title="Classement"><i class="fas fa-trophy"></i></div>
                 </div>
                 <div class="header-right nav-icons">
-                    <div class="nav-icon" id="theme-toggle-btn" title="Changer de thème">
-                        <i class="fas fa-moon"></i>
-                    </div>
                     <div class="nav-icon" data-view="notifications" title="Notifications"><i class="fas fa-bell"></i></div>
                     <div class="nav-icon" data-view="profile" title="Profil"><i class="fas fa-user"></i></div>
                     <div class="nav-icon" id="admin-icon" data-view="admin" title="Admin" style="display: none;"><i class="fas fa-crown"></i></div>
@@ -1648,10 +1588,10 @@
             <div class="mobile-nav-icon" data-view="search">
                 <i class="fas fa-search"></i>
                 <span>Recherche</span>
-            </div>
-            <div class="mobile-nav-icon" id="mobile-theme-toggle-btn">
-                <i class="fas fa-moon"></i>
-                <span>Thème</span>
+                <div class="mobile-nav-icon" data-view="leaderboard">
+    <i class="fas fa-trophy"></i>
+    <span>Classement</span>
+</div>
             </div>
             <div class="mobile-nav-icon" data-view="notifications">
                 <i class="fas fa-bell"></i>
@@ -1882,6 +1822,15 @@
                     </div>
                 </div>
             </div>
+            <div id="leaderboard-view" class="view">
+    <h1 class="view-title">🏆 Meilleurs Contributeurs</h1>
+    <div class="card">
+        <p style="margin-bottom: 1.5rem;">Voici le top 10 des utilisateurs qui aident le plus la communauté en partageant des épreuves !</p>
+        
+        <ol id="leaderboard-list" style="padding-left: 2rem; font-size: 1.1rem; line-height: 2;">
+            </ol>
+    </div>
+</div>
         </main>
 
         <footer>
@@ -1978,13 +1927,9 @@
             <h2 class="popup-title">Ajouter un corrigé seulement</h2>
             <form id="add-corrige-only-form">
                 <div class="form-group">
-                    <label for="corrige-exam-search">Rechercher l'épreuve</label>
-                    <input type="text" id="corrige-exam-search" class="search-bar" placeholder="Tapez le nom de l'épreuve...">
-                </div>
-                <div class="form-group">
                     <label for="corrige-exam-select">Sélectionner l'épreuve</label>
                     <select id="corrige-exam-select" required>
-                        <option value="">Tapez pour rechercher une épreuve</option>
+                        <option value="">Sélectionnez une épreuve existante</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -2074,21 +2019,21 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-
-        // Activation de la persistance Firestore
-        try {
-            db.enablePersistence()
-                .catch(function(err) {
-                    if (err.code == 'failed-precondition') {
-                        console.warn('Persistance Firestore échouée (plusieurs onglets ouverts)');
-                    } else if (err.code == 'unimplemented') {
-                        console.warn('Persistance Firestore non supportée sur ce navigateur.');
-                    }
-                });
-            console.log('Persistance des données HosBac activée !');
-        } catch (e) {
-            console.error('Erreur activation persistance:', e);
+// --- Activation de la persistance Firestore (Mode Hors Ligne) ---
+try {
+  db.enablePersistence()
+    .catch(function(err) {
+        if (err.code == 'failed-precondition') {
+            console.warn('Persistance Firestore échouée (plusieurs onglets ouverts)');
+        } else if (err.code == 'unimplemented') {
+            console.warn('Persistance Firestore non supportée sur ce navigateur.');
         }
+    });
+  console.log('Persistance des données HosBac activée !');
+} catch (e) {
+  console.error('Erreur activation persistance:', e);
+}
+// --- Fin de l'activation ---
 
         // Configuration Cloudinary
         const cloudName = "dqn1dbimm";
@@ -2154,9 +2099,6 @@
         const mobileMenu = document.getElementById('mobile-menu');
         const welcomeMessage = document.getElementById('welcome-message');
         const welcomeSubtitle = document.getElementById('welcome-subtitle');
-        const themeToggleBtn = document.getElementById('theme-toggle-btn');
-        const mobileThemeToggleBtn = document.getElementById('mobile-theme-toggle-btn');
-        const body = document.body;
 
         // Vérifier si l'URL contient un paramètre de partage d'épreuve
         const urlParams = new URLSearchParams(window.location.search);
@@ -2177,40 +2119,6 @@
 
         // Initialisation de l'application
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Logique du Thème Sombre ---
-            const moonIcon = '<i class="fas fa-moon"></i>';
-            const sunIcon = '<i class="fas fa-sun"></i>';
-
-            // Vérifier le thème sauvegardé
-            if (localStorage.getItem('theme') === 'dark') {
-                body.classList.add('theme-dark');
-                if (themeToggleBtn) themeToggleBtn.innerHTML = sunIcon;
-                if (mobileThemeToggleBtn) mobileThemeToggleBtn.querySelector('i').className = 'fas fa-sun';
-            }
-
-            function toggleTheme() {
-                body.classList.toggle('theme-dark');
-                let theme = 'light';
-                let icon = moonIcon;
-                let mobileIconClass = 'fas fa-moon';
-                if (body.classList.contains('theme-dark')) {
-                    theme = 'dark';
-                    icon = sunIcon;
-                    mobileIconClass = 'fas fa-sun';
-                }
-                localStorage.setItem('theme', theme); // Sauvegarder le choix
-                if (themeToggleBtn) themeToggleBtn.innerHTML = icon;
-                if (mobileThemeToggleBtn) mobileThemeToggleBtn.querySelector('i').className = mobileIconClass;
-            }
-
-            if (themeToggleBtn) {
-                themeToggleBtn.addEventListener('click', toggleTheme);
-            }
-            if (mobileThemeToggleBtn) {
-                mobileThemeToggleBtn.addEventListener('click', toggleTheme);
-            }
-            // --- Fin de la logique du Thème Sombre ---
-
             // Afficher l'écran de démarrage pendant 4 secondes
             setTimeout(() => {
                 splashScreen.style.opacity = '0';
@@ -2526,6 +2434,9 @@
                     case 'admin':
                         loadAdminPanel();
                         break;
+                    case 'leaderboard':
+                        loadLeaderboard();
+                        break;
                 }
             }
             
@@ -2541,55 +2452,7 @@
 
             // Gestionnaire pour le bouton d'ajout de corrigé seulement
             addCorrigeOnlyBtn.addEventListener('click', () => {
-                // Vider la liste
-                const examSelect = document.getElementById('corrige-exam-select');
-                examSelect.innerHTML = '<option value="">Tapez pour rechercher une épreuve</option>';
-
-                // Attacher le listener de recherche
-                const searchInput = document.getElementById('corrige-exam-search');
-                // Utiliser debounce pour ne pas surcharger Firebase
-                searchInput.oninput = debounce(async () => {
-                    const query = searchInput.value.toLowerCase().trim();
-                    if (query.length < 3) {
-                        examSelect.innerHTML = '<option value="">Tapez au moins 3 lettres</option>';
-                        return;
-                    }
-
-                    examSelect.innerHTML = '<option value="">Recherche en cours...</option>';
-
-                    try {
-                        // Recherche les épreuves de l'utilisateur qui n'ont pas de corrigé
-                        const snapshot = await db.collection('epreuves')
-                            .where('auteurId', '==', currentUser.uid)
-                            .where('fichier_corrige', '==', null)
-                            .where('status', '==', 'approved')
-                            .get();
-
-                        examSelect.innerHTML = '';
-                        let found = false;
-                        snapshot.forEach(doc => {
-                            const exam = doc.data();
-                            // Filtrage côté client après la requête
-                            if (exam.nom_epreuve.toLowerCase().includes(query)) {
-                                const option = document.createElement('option');
-                                option.value = doc.id;
-                                option.textContent = `${exam.nom_epreuve} (${exam.classe})`;
-                                examSelect.appendChild(option);
-                                found = true;
-                            }
-                        });
-
-                        if (!found) {
-                            examSelect.innerHTML = '<option value="">Aucune épreuve trouvée</option>';
-                        }
-
-                    } catch (error) {
-                        console.error("Erreur recherche d'épreuve:", error);
-                        examSelect.innerHTML = '<option value="">Erreur de recherche</option>';
-                    }
-                }, 300); // 300ms de délai
-
-                // Afficher le popup
+                loadExistingExamsForCorrige();
                 addCorrigeOnlyPopup.style.display = 'flex';
             });
 
@@ -3734,6 +3597,30 @@
                 });
         }
 
+        function loadExistingExamsForCorrige() {
+            const examSelect = document.getElementById('corrige-exam-select');
+            examSelect.innerHTML = '<option value="">Sélectionnez une épreuve existante</option>';
+            
+            // Charger seulement les épreuves de l'utilisateur actuel qui n'ont pas de corrigé
+            db.collection('epreuves')
+                .where('auteurId', '==', currentUser.uid)
+                .where('fichier_corrige', '==', null)
+                .where('status', '==', 'approved')
+                .get()
+                .then(querySnapshot => {
+                    querySnapshot.forEach(doc => {
+                        const exam = doc.data();
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${exam.nom_epreuve} - ${exam.matiere} - ${exam.classe}`;
+                        examSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des épreuves:', error);
+                });
+        }
+
         function notifyAdminsAboutPendingExam() {
             // Récupérer tous les administrateurs
             db.collection('users')
@@ -4359,6 +4246,40 @@
                 }
             }
         }
+                // --- NOUVELLE FONCTION POUR LE CLASSEMENT ---
+function loadLeaderboard() {
+    const listContainer = document.getElementById('leaderboard-list');
+    if (!listContainer) return; // Sécurité
+    listContainer.innerHTML = '<li>Chargement du classement...</li>';
+
+    db.collection('users')
+        .orderBy('examsUploaded', 'desc') // Tri par le plus grand nombre
+        .limit(10) // On prend seulement le Top 10
+        .get()
+        .then(querySnapshot => {
+            listContainer.innerHTML = ''; // On vide la liste
+            if (querySnapshot.empty) {
+                listContainer.innerHTML = '<li>Aucun contributeur trouvé.</li>';
+                return;
+            }
+
+            let rank = 1;
+            querySnapshot.forEach(doc => {
+                const user = doc.data();
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>${user.prenom} ${user.nom}</strong> - ${user.examsUploaded || 0} épreuve(s)
+                `;
+                listContainer.appendChild(listItem);
+                rank++;
+            });
+        })
+        .catch(error => {
+            console.error('Erreur chargement classement:', error);
+            listContainer.innerHTML = '<li>Erreur lors du chargement du classement.</li>';
+        });
+}
+// --- FIN DE LA FONCTION CLASSEMENT ---
 
         function approveExam(examId, authorId, points) {
             db.collection('epreuves').doc(examId).update({
