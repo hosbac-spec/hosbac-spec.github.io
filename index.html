@@ -1300,6 +1300,184 @@
             transform: translateY(-2px);
         }
 
+        /* Style pour le bouton de thème */
+        #theme-toggle-btn .fa-sun { display: none; }
+        .theme-dark #theme-toggle-btn .fa-sun { display: inline-block; }
+        .theme-dark #theme-toggle-btn .fa-moon { display: none; }
+
+        /* Thème Sombre (Noir) */
+        body.theme-dark {
+            background: #121212;
+            color: #e0e0e0;
+        }
+        body.theme-dark .card,
+        body.theme-dark .popup-content,
+        body.theme-dark .auth-container,
+        body.theme-dark header,
+        body.theme-dark footer {
+            background: rgba(40, 40, 40, 0.7); /* Glassmorphism sombre */
+            backdrop-filter: blur(10px);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+        }
+        body.theme-dark .view-title,
+        body.theme-dark .card-title,
+        body.theme-dark .logo,
+        body.theme-dark .footer-link {
+            color: #ffffff;
+        }
+        body.theme-dark .text-light {
+            color: #a0a0a0;
+        }
+        body.theme-dark .search-bar,
+        body.theme-dark .filter-select,
+        body.theme-dark .form-group input,
+        body.theme-dark .form-group select {
+            background: rgba(60, 60, 60, 0.7);
+            color: #e0e0e0;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.theme-dark .exam-card {
+            background: rgba(40, 40, 40, 0.7);
+        }
+        body.theme-dark .notification-item:hover,
+        body.theme-dark .search-result-item:hover {
+            background: rgba(60, 60, 60, 0.5);
+        }
+        body.theme-dark .header-center .nav-icon.active {
+            background: rgba(30, 58, 138, 0.5);
+            color: #ffffff;
+        }
+        body.theme-dark .header-right .nav-icon {
+            background: rgba(60, 60, 60, 0.7);
+        }
+        body.theme-dark .header-right .nav-icon.active {
+            background: var(--primary-blue);
+        }
+        body.theme-dark .mobile-nav-icon.active {
+            background: rgba(30, 58, 138, 0.5);
+        }
+
+        /* Styles pour les nouvelles fonctionnalités */
+        
+        /* Système de commentaires et notation */
+        .exam-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .star-rating {
+            display: flex;
+            gap: 0.2rem;
+        }
+        
+        .star {
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .star.active {
+            color: #ffc107;
+        }
+        
+        .comments-section {
+            margin-top: 2rem;
+            border-top: 1px solid var(--light-blue);
+            padding-top: 1.5rem;
+        }
+        
+        .comment-form {
+            margin-bottom: 2rem;
+        }
+        
+        .comment-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .comment-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-blue);
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .comment-author {
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+        
+        .comment-date {
+            color: var(--text-light);
+            font-size: 0.8rem;
+        }
+        
+        .comment-rating {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Classement */
+        .leaderboard-list {
+            list-style: none;
+            counter-reset: leaderboard-counter;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--glass-bg);
+            border-radius: 10px;
+            counter-increment: leaderboard-counter;
+        }
+        
+        .leaderboard-item::before {
+            content: counter(leaderboard-counter);
+            font-weight: bold;
+            color: var(--primary-blue);
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .leaderboard-user {
+            flex: 1;
+        }
+        
+        .leaderboard-stats {
+            font-weight: bold;
+            color: var(--primary-blue);
+        }
+        
+        /* Demander une épreuve */
+        .requested-exams {
+            margin-top: 2rem;
+        }
+        
+        .request-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--light-blue);
+        }
+        
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .request-details {
+            color: var(--text-light);
+        }
+
         /* Animations */
         @keyframes slideUp {
             from { transform: translateY(50px); opacity: 0; }
@@ -1565,10 +1743,13 @@
                 <div class="header-center nav-icons">
                     <div class="nav-icon active" data-view="home" title="Accueil"><i class="fas fa-home"></i></div>
                     <div class="nav-icon" data-view="exams" title="Examens"><i class="fas fa-file-alt"></i></div>
-                    <div class="nav-icon" data-view="search" title="Recherche"><i class="fas fa-search"></i></div>
                     <div class="nav-icon" data-view="leaderboard" title="Classement"><i class="fas fa-trophy"></i></div>
+                    <div class="nav-icon" data-view="search" title="Recherche"><i class="fas fa-search"></i></div>
                 </div>
                 <div class="header-right nav-icons">
+                    <div class="nav-icon" id="theme-toggle-btn" title="Changer de thème">
+                        <i class="fas fa-moon"></i>
+                    </div>
                     <div class="nav-icon" data-view="notifications" title="Notifications"><i class="fas fa-bell"></i></div>
                     <div class="nav-icon" data-view="profile" title="Profil"><i class="fas fa-user"></i></div>
                     <div class="nav-icon" id="admin-icon" data-view="admin" title="Admin" style="display: none;"><i class="fas fa-crown"></i></div>
@@ -1585,13 +1766,17 @@
                 <i class="fas fa-file-alt"></i>
                 <span>Examens</span>
             </div>
+            <div class="mobile-nav-icon" data-view="leaderboard">
+                <i class="fas fa-trophy"></i>
+                <span>Classement</span>
+            </div>
             <div class="mobile-nav-icon" data-view="search">
                 <i class="fas fa-search"></i>
                 <span>Recherche</span>
-                <div class="mobile-nav-icon" data-view="leaderboard">
-    <i class="fas fa-trophy"></i>
-    <span>Classement</span>
-</div>
+            </div>
+            <div class="mobile-nav-icon" id="mobile-theme-toggle-btn">
+                <i class="fas fa-moon"></i>
+                <span>Thème</span>
             </div>
             <div class="mobile-nav-icon" data-view="notifications">
                 <i class="fas fa-bell"></i>
@@ -1694,6 +1879,9 @@
                     </button>
                     <button id="add-corrige-only-btn" class="add-exam-btn" style="background: var(--success);">
                         <i class="fas fa-file-pdf"></i> Ajouter un corrigé seulement
+                    </button>
+                    <button id="request-exam-btn" class="add-exam-btn" style="background: var(--warning);">
+                        <i class="fas fa-search-plus"></i> Demander une épreuve
                     </button>
                 </div>
                 <div id="exams-list" class="exam-list">
@@ -1821,16 +2009,25 @@
                         <!-- Les épreuves en attente seront chargées ici -->
                     </div>
                 </div>
+                
+                <div class="requested-exams card">
+                    <h3 class="card-title">Épreuves demandées par les utilisateurs</h3>
+                    <div id="requested-exams-list">
+                        <!-- Les épreuves demandées seront chargées ici -->
+                    </div>
+                </div>
             </div>
+
+            <!-- Nouvelle vue Classement -->
             <div id="leaderboard-view" class="view">
-    <h1 class="view-title">🏆 Meilleurs Contributeurs</h1>
-    <div class="card">
-        <p style="margin-bottom: 1.5rem;">Voici le top 10 des utilisateurs qui aident le plus la communauté en partageant des épreuves !</p>
-        
-        <ol id="leaderboard-list" style="padding-left: 2rem; font-size: 1.1rem; line-height: 2;">
-            </ol>
-    </div>
-</div>
+                <h1 class="view-title">🏆 Meilleurs Contributeurs</h1>
+                <div class="card">
+                    <p>Voici le top 10 des utilisateurs qui aident le plus la communauté !</p>
+                    <ol id="leaderboard-list" class="leaderboard-list">
+                        <!-- Le classement sera chargé ici -->
+                    </ol>
+                </div>
+            </div>
         </main>
 
         <footer>
@@ -1927,9 +2124,13 @@
             <h2 class="popup-title">Ajouter un corrigé seulement</h2>
             <form id="add-corrige-only-form">
                 <div class="form-group">
+                    <label for="corrige-exam-search">Rechercher l'épreuve</label>
+                    <input type="text" id="corrige-exam-search" class="search-bar" placeholder="Tapez le nom de l'épreuve...">
+                </div>
+                <div class="form-group">
                     <label for="corrige-exam-select">Sélectionner l'épreuve</label>
                     <select id="corrige-exam-select" required>
-                        <option value="">Sélectionnez une épreuve existante</option>
+                        <option value="">Tapez pour rechercher une épreuve</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -1941,6 +2142,62 @@
                 </div>
                 <button type="submit" class="submit-btn">Soumettre le corrigé</button>
             </form>
+        </div>
+    </div>
+
+    <div id="request-exam-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title">Demander une épreuve</h2>
+            <form id="request-exam-form">
+                <div class="form-group">
+                    <label for="request-matiere">Matière</label>
+                    <select id="request-matiere" required>
+                        <option value="">Sélectionnez une matière</option>
+                        <option value="Mathématique">Mathématique</option>
+                        <option value="Français">Français</option>
+                        <option value="SVT">SVT</option>
+                        <option value="PCT">PCT</option>
+                        <option value="Espagnol">Espagnol</option>
+                        <option value="Histoire-géographie">Histoire-géographie</option>
+                        <option value="Allemand">Allemand</option>
+                        <option value="Économie">Économie</option>
+                        <option value="Anglais">Anglais</option>
+                        <option value="Comptabilité">Comptabilité</option>
+                        <option value="T-bad">T-bad</option>
+                        <option value="Philosophie">Philosophie</option>
+                        <option value="Droit">Droit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="request-classe">Classe</label>
+                    <select id="request-classe" required>
+                        <option value="">Sélectionnez une classe</option>
+                        <option value="6ème">6ème</option>
+                        <option value="5ème">5ème</option>
+                        <option value="4ème">4ème</option>
+                        <option value="3ème">3ème</option>
+                        <option value="2nd">2nd</option>
+                        <option value="1ère">1ère</option>
+                        <option value="Terminale">Terminale</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="request-nom">Nom de l'épreuve / Année</label>
+                    <input type="text" id="request-nom" placeholder="Ex: Épreuve de Mathématique 2023" required>
+                </div>
+                <button type="submit" class="submit-btn">Soumettre la demande</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="exam-details-popup" class="popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close"><i class="fas fa-times"></i></button>
+            <h2 class="popup-title" id="exam-details-title">Détails de l'épreuve</h2>
+            <div id="exam-details-content">
+                <!-- Les détails de l'épreuve et les commentaires seront chargés ici -->
+            </div>
         </div>
     </div>
 
@@ -2019,21 +2276,21 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-// --- Activation de la persistance Firestore (Mode Hors Ligne) ---
-try {
-  db.enablePersistence()
-    .catch(function(err) {
-        if (err.code == 'failed-precondition') {
-            console.warn('Persistance Firestore échouée (plusieurs onglets ouverts)');
-        } else if (err.code == 'unimplemented') {
-            console.warn('Persistance Firestore non supportée sur ce navigateur.');
+
+        // Activation de la persistance Firestore
+        try {
+            db.enablePersistence()
+                .catch(function(err) {
+                    if (err.code == 'failed-precondition') {
+                        console.warn('Persistance Firestore échouée (plusieurs onglets ouverts)');
+                    } else if (err.code == 'unimplemented') {
+                        console.warn('Persistance Firestore non supportée sur ce navigateur.');
+                    }
+                });
+            console.log('Persistance des données HosBac activée !');
+        } catch (e) {
+            console.error('Erreur activation persistance:', e);
         }
-    });
-  console.log('Persistance des données HosBac activée !');
-} catch (e) {
-  console.error('Erreur activation persistance:', e);
-}
-// --- Fin de l'activation ---
 
         // Configuration Cloudinary
         const cloudName = "dqn1dbimm";
@@ -2066,10 +2323,14 @@ try {
         const signupForm = document.getElementById('signup-form');
         const addExamBtn = document.getElementById('add-exam-btn');
         const addCorrigeOnlyBtn = document.getElementById('add-corrige-only-btn');
+        const requestExamBtn = document.getElementById('request-exam-btn');
         const addExamPopup = document.getElementById('add-exam-popup');
         const addCorrigeOnlyPopup = document.getElementById('add-corrige-only-popup');
+        const requestExamPopup = document.getElementById('request-exam-popup');
+        const examDetailsPopup = document.getElementById('exam-details-popup');
         const addExamForm = document.getElementById('add-exam-form');
         const addCorrigeOnlyForm = document.getElementById('add-corrige-only-form');
+        const requestExamForm = document.getElementById('request-exam-form');
         const transferPopup = document.getElementById('transfer-popup');
         const termsPopup = document.getElementById('terms-popup');
         const privacyPopup = document.getElementById('privacy-popup');
@@ -2099,6 +2360,10 @@ try {
         const mobileMenu = document.getElementById('mobile-menu');
         const welcomeMessage = document.getElementById('welcome-message');
         const welcomeSubtitle = document.getElementById('welcome-subtitle');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const mobileThemeToggleBtn = document.getElementById('mobile-theme-toggle-btn');
+        const body = document.body;
+        const leaderboardList = document.getElementById('leaderboard-list');
 
         // Vérifier si l'URL contient un paramètre de partage d'épreuve
         const urlParams = new URLSearchParams(window.location.search);
@@ -2119,6 +2384,40 @@ try {
 
         // Initialisation de l'application
         document.addEventListener('DOMContentLoaded', function() {
+            // --- Logique du Thème Sombre ---
+            const moonIcon = '<i class="fas fa-moon"></i>';
+            const sunIcon = '<i class="fas fa-sun"></i>';
+
+            // Vérifier le thème sauvegardé
+            if (localStorage.getItem('theme') === 'dark') {
+                body.classList.add('theme-dark');
+                if (themeToggleBtn) themeToggleBtn.innerHTML = sunIcon;
+                if (mobileThemeToggleBtn) mobileThemeToggleBtn.querySelector('i').className = 'fas fa-sun';
+            }
+
+            function toggleTheme() {
+                body.classList.toggle('theme-dark');
+                let theme = 'light';
+                let icon = moonIcon;
+                let mobileIconClass = 'fas fa-moon';
+                if (body.classList.contains('theme-dark')) {
+                    theme = 'dark';
+                    icon = sunIcon;
+                    mobileIconClass = 'fas fa-sun';
+                }
+                localStorage.setItem('theme', theme); // Sauvegarder le choix
+                if (themeToggleBtn) themeToggleBtn.innerHTML = icon;
+                if (mobileThemeToggleBtn) mobileThemeToggleBtn.querySelector('i').className = mobileIconClass;
+            }
+
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', toggleTheme);
+            }
+            if (mobileThemeToggleBtn) {
+                mobileThemeToggleBtn.addEventListener('click', toggleTheme);
+            }
+            // --- Fin de la logique du Thème Sombre ---
+
             // Afficher l'écran de démarrage pendant 4 secondes
             setTimeout(() => {
                 splashScreen.style.opacity = '0';
@@ -2452,8 +2751,61 @@ try {
 
             // Gestionnaire pour le bouton d'ajout de corrigé seulement
             addCorrigeOnlyBtn.addEventListener('click', () => {
-                loadExistingExamsForCorrige();
+                // Vider la liste
+                const examSelect = document.getElementById('corrige-exam-select');
+                examSelect.innerHTML = '<option value="">Tapez pour rechercher une épreuve</option>';
+
+                // Attacher le listener de recherche
+                const searchInput = document.getElementById('corrige-exam-search');
+                // Utiliser debounce pour ne pas surcharger Firebase
+                searchInput.oninput = debounce(async () => {
+                    const query = searchInput.value.toLowerCase().trim();
+                    if (query.length < 3) {
+                        examSelect.innerHTML = '<option value="">Tapez au moins 3 lettres</option>';
+                        return;
+                    }
+
+                    examSelect.innerHTML = '<option value="">Recherche en cours...</option>';
+
+                    try {
+                        // Recherche les épreuves de l'utilisateur qui n'ont pas de corrigé
+                        const snapshot = await db.collection('epreuves')
+                            .where('auteurId', '==', currentUser.uid)
+                            .where('fichier_corrige', '==', null)
+                            .where('status', '==', 'approved')
+                            .get();
+
+                        examSelect.innerHTML = '';
+                        let found = false;
+                        snapshot.forEach(doc => {
+                            const exam = doc.data();
+                            // Filtrage côté client après la requête
+                            if (exam.nom_epreuve.toLowerCase().includes(query)) {
+                                const option = document.createElement('option');
+                                option.value = doc.id;
+                                option.textContent = `${exam.nom_epreuve} (${exam.classe})`;
+                                examSelect.appendChild(option);
+                                found = true;
+                            }
+                        });
+
+                        if (!found) {
+                            examSelect.innerHTML = '<option value="">Aucune épreuve trouvée</option>';
+                        }
+
+                    } catch (error) {
+                        console.error("Erreur recherche d'épreuve:", error);
+                        examSelect.innerHTML = '<option value="">Erreur de recherche</option>';
+                    }
+                }, 300); // 300ms de délai
+
+                // Afficher le popup
                 addCorrigeOnlyPopup.style.display = 'flex';
+            });
+
+            // Gestionnaire pour le bouton de demande d'épreuve
+            requestExamBtn.addEventListener('click', () => {
+                requestExamPopup.style.display = 'flex';
             });
 
             // Gestionnaire pour le formulaire d'ajout d'épreuve
@@ -2466,6 +2818,12 @@ try {
             addCorrigeOnlyForm.addEventListener('submit', e => {
                 e.preventDefault();
                 submitCorrigeOnly();
+            });
+
+            // Gestionnaire pour le formulaire de demande d'épreuve
+            requestExamForm.addEventListener('submit', e => {
+                e.preventDefault();
+                submitRequestExam();
             });
 
             // Gestionnaire pour le bouton de déconnexion
@@ -3031,6 +3389,11 @@ try {
             
             const isFavorite = userData && userData.favorites && userData.favorites.includes(examId);
             
+            // Calculer la note moyenne
+            const averageRating = exam.totalNotes && exam.nombreDeVotes ? 
+                (exam.totalNotes / exam.nombreDeVotes).toFixed(1) : '0.0';
+            const ratingCount = exam.nombreDeVotes || 0;
+            
             card.innerHTML = `
                 <h3 class="exam-name">${exam.nom_epreuve}</h3>
                 <div class="exam-details">
@@ -3038,6 +3401,9 @@ try {
                     <p>Classe: ${exam.classe}</p>
                     <p>Série: ${exam.serie}</p>
                     <p>Publié par: <span class="author-link" data-author-id="${exam.auteurId}">${exam.auteurNom || 'Utilisateur'}</span></p>
+                    <div class="exam-rating">
+                        <span>⭐ ${averageRating} (${ratingCount} avis)</span>
+                    </div>
                 </div>
                 <div class="exam-actions">
                     <button class="exam-btn view-btn" data-exam-id="${examId}" data-type="sujet">Voir l'épreuve</button>
@@ -3053,7 +3419,7 @@ try {
             
             const viewBtn = card.querySelector('.view-btn');
             viewBtn.addEventListener('click', () => {
-                viewExam(examId, 'sujet');
+                showExamDetails(examId);
             });
             
             const downloadBtns = card.querySelectorAll('.download-btn');
@@ -3097,6 +3463,201 @@ try {
             });
             
             return card;
+        }
+
+        // Fonction pour afficher les détails d'une épreuve avec commentaires
+        function showExamDetails(examId) {
+            const examDetailsContent = document.getElementById('exam-details-content');
+            examDetailsContent.innerHTML = '<p>Chargement des détails...</p>';
+            
+            examDetailsPopup.style.display = 'flex';
+            
+            db.collection('epreuves').doc(examId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const exam = doc.data();
+                        
+                        // Calculer la note moyenne
+                        const averageRating = exam.totalNotes && exam.nombreDeVotes ? 
+                            (exam.totalNotes / exam.nombreDeVotes).toFixed(1) : '0.0';
+                        const ratingCount = exam.nombreDeVotes || 0;
+                        
+                        examDetailsContent.innerHTML = `
+                            <div class="exam-details">
+                                <h3>${exam.nom_epreuve}</h3>
+                                <p><strong>Matière:</strong> ${exam.matiere}</p>
+                                <p><strong>Classe:</strong> ${exam.classe}</p>
+                                <p><strong>Série:</strong> ${exam.serie}</p>
+                                <p><strong>Publié par:</strong> ${exam.auteurNom || 'Utilisateur'}</p>
+                                <div class="exam-rating">
+                                    <span><strong>Note moyenne:</strong> ⭐ ${averageRating} (${ratingCount} avis)</span>
+                                </div>
+                                <div class="exam-actions" style="margin-top: 1rem;">
+                                    <a href="${exam.fichier_sujet}" download="${exam.nom_epreuve}_sujet.pdf" class="exam-btn download-btn">Télécharger l'épreuve</a>
+                                    ${exam.fichier_corrige ? `<a href="${exam.fichier_corrige}" download="${exam.nom_epreuve}_corrige.pdf" class="exam-btn download-btn">Télécharger le corrigé (2 points)</a>` : ''}
+                                </div>
+                            </div>
+                            <div class="comments-section">
+                                <h3>Commentaires et avis</h3>
+                                <div class="comment-form">
+                                    <h4>Laisser un commentaire</h4>
+                                    <div class="form-group">
+                                        <label>Note (sur 5 étoiles)</label>
+                                        <div class="star-rating" id="star-rating">
+                                            <span class="star" data-rating="1">★</span>
+                                            <span class="star" data-rating="2">★</span>
+                                            <span class="star" data-rating="3">★</span>
+                                            <span class="star" data-rating="4">★</span>
+                                            <span class="star" data-rating="5">★</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="comment-text">Commentaire</label>
+                                        <textarea id="comment-text" placeholder="Partagez votre avis sur cette épreuve..." rows="4"></textarea>
+                                    </div>
+                                    <button id="submit-comment-btn" class="submit-btn">Soumettre le commentaire</button>
+                                </div>
+                                <div id="comments-list" class="comment-list">
+                                    <!-- Les commentaires seront chargés ici -->
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Initialiser le système de notation par étoiles
+                        const stars = examDetailsContent.querySelectorAll('.star');
+                        let selectedRating = 0;
+                        
+                        stars.forEach(star => {
+                            star.addEventListener('click', () => {
+                                selectedRating = parseInt(star.getAttribute('data-rating'));
+                                stars.forEach(s => {
+                                    if (parseInt(s.getAttribute('data-rating')) <= selectedRating) {
+                                        s.classList.add('active');
+                                    } else {
+                                        s.classList.remove('active');
+                                    }
+                                });
+                            });
+                        });
+                        
+                        // Gestionnaire pour le bouton de soumission de commentaire
+                        document.getElementById('submit-comment-btn').addEventListener('click', () => {
+                            if (selectedRating === 0) {
+                                showNotification('Veuillez sélectionner une note', 'warning');
+                                return;
+                            }
+                            
+                            const commentText = document.getElementById('comment-text').value.trim();
+                            if (!commentText) {
+                                showNotification('Veuillez écrire un commentaire', 'warning');
+                                return;
+                            }
+                            
+                            submitComment(examId, selectedRating, commentText);
+                        });
+                        
+                        // Charger les commentaires existants
+                        loadComments(examId);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des détails de l\'épreuve:', error);
+                    examDetailsContent.innerHTML = '<p>Erreur lors du chargement des détails.</p>';
+                });
+        }
+
+        // Fonction pour soumettre un commentaire
+        function submitComment(epreuveId, note, texte) {
+            db.collection('epreuves').doc(epreuveId).collection('commentaires').add({
+                auteurId: currentUser.uid,
+                auteurNom: `${userData.prenom} ${userData.nom}`,
+                note: note,
+                texte: texte,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                // Mettre à jour les statistiques de notation de l'épreuve
+                return db.collection('epreuves').doc(epreuveId).update({
+                    totalNotes: firebase.firestore.FieldValue.increment(note),
+                    nombreDeVotes: firebase.firestore.FieldValue.increment(1)
+                });
+            })
+            .then(() => {
+                showNotification('Commentaire ajouté avec succès', 'success');
+                document.getElementById('comment-text').value = '';
+                
+                // Réinitialiser les étoiles
+                const stars = document.querySelectorAll('.star');
+                stars.forEach(star => star.classList.remove('active'));
+                
+                // Recharger les commentaires
+                loadComments(epreuveId);
+                
+                // Recharger la liste des épreuves pour mettre à jour les notes
+                if (document.getElementById('exams-view').classList.contains('active')) {
+                    loadAllExams();
+                }
+                if (document.getElementById('home-view').classList.contains('active')) {
+                    loadRecentExams();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'ajout du commentaire:', error);
+                showNotification('Erreur lors de l\'ajout du commentaire', 'error');
+            });
+        }
+
+        // Fonction pour charger les commentaires d'une épreuve
+        function loadComments(epreuveId) {
+            const commentsList = document.getElementById('comments-list');
+            commentsList.innerHTML = '<p>Chargement des commentaires...</p>';
+            
+            db.collection('epreuves').doc(epreuveId).collection('commentaires')
+                .orderBy('createdAt', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    commentsList.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        commentsList.innerHTML = '<p>Aucun commentaire pour le moment.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const comment = doc.data();
+                        const commentElement = document.createElement('div');
+                        commentElement.className = 'comment-item';
+                        
+                        // Générer les étoiles pour la note
+                        let starsHtml = '';
+                        for (let i = 1; i <= 5; i++) {
+                            if (i <= comment.note) {
+                                starsHtml += '<span class="star active">★</span>';
+                            } else {
+                                starsHtml += '<span class="star">★</span>';
+                            }
+                        }
+                        
+                        commentElement.innerHTML = `
+                            <div class="comment-header">
+                                <span class="comment-author">${comment.auteurNom}</span>
+                                <span class="comment-date">${new Date(comment.createdAt?.toDate()).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            <div class="comment-rating">
+                                ${starsHtml}
+                            </div>
+                            <div class="comment-text">
+                                ${comment.texte}
+                            </div>
+                        `;
+                        
+                        commentsList.appendChild(commentElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des commentaires:', error);
+                    commentsList.innerHTML = '<p>Erreur lors du chargement des commentaires.</p>';
+                });
         }
 
         async function handleAddToFavorites(epreuveId, auteurId, button) {
@@ -3516,6 +4077,8 @@ try {
                         auteurNom: `${userData.prenom} ${userData.nom}`,
                         status: status,
                         downloadCount: 0,
+                        totalNotes: 0,
+                        nombreDeVotes: 0,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 })
@@ -3597,28 +4160,33 @@ try {
                 });
         }
 
-        function loadExistingExamsForCorrige() {
-            const examSelect = document.getElementById('corrige-exam-select');
-            examSelect.innerHTML = '<option value="">Sélectionnez une épreuve existante</option>';
+        // Fonction pour soumettre une demande d'épreuve
+        function submitRequestExam() {
+            const matiere = document.getElementById('request-matiere').value;
+            const classe = document.getElementById('request-classe').value;
+            const nom = document.getElementById('request-nom').value;
             
-            // Charger seulement les épreuves de l'utilisateur actuel qui n'ont pas de corrigé
-            db.collection('epreuves')
-                .where('auteurId', '==', currentUser.uid)
-                .where('fichier_corrige', '==', null)
-                .where('status', '==', 'approved')
-                .get()
-                .then(querySnapshot => {
-                    querySnapshot.forEach(doc => {
-                        const exam = doc.data();
-                        const option = document.createElement('option');
-                        option.value = doc.id;
-                        option.textContent = `${exam.nom_epreuve} - ${exam.matiere} - ${exam.classe}`;
-                        examSelect.appendChild(option);
-                    });
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement des épreuves:', error);
-                });
+            db.collection('requests').add({
+                matiere: matiere,
+                classe: classe,
+                nom: nom,
+                demandeurId: currentUser.uid,
+                demandeurNom: `${userData.prenom} ${userData.nom}`,
+                status: 'pending',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                requestExamPopup.style.display = 'none';
+                requestExamForm.reset();
+                showNotification('Demande d\'épreuve soumise avec succès', 'success');
+                
+                // Notifier les administrateurs
+                notifyAdminsAboutRequest();
+            })
+            .catch(error => {
+                console.error('Erreur lors de la soumission de la demande:', error);
+                showNotification('Erreur lors de la soumission de la demande', 'error');
+            });
         }
 
         function notifyAdminsAboutPendingExam() {
@@ -3633,6 +4201,26 @@ try {
                         db.collection('users').doc(doc.id).collection('notifications').add({
                             type: 'pending_exam',
                             message: `Une nouvelle épreuve est en attente d'approbation`,
+                            read: false,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la notification des admins:', error);
+                });
+        }
+
+        // Fonction pour notifier les admins d'une nouvelle demande d'épreuve
+        function notifyAdminsAboutRequest() {
+            db.collection('users')
+                .where('role', '==', 'admin')
+                .get()
+                .then(querySnapshot => {
+                    querySnapshot.forEach(doc => {
+                        db.collection('users').doc(doc.id).collection('notifications').add({
+                            type: 'request_exam',
+                            message: `Un utilisateur a demandé une nouvelle épreuve`,
                             read: false,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
@@ -3674,6 +4262,7 @@ try {
                         else if (notification.type === 'approval') icon = 'fas fa-check-circle';
                         else if (notification.type === 'announcement_like') icon = 'fas fa-heart';
                         else if (notification.type === 'pending_exam') icon = 'fas fa-clock';
+                        else if (notification.type === 'request_exam') icon = 'fas fa-search-plus';
                         
                         notificationElement.innerHTML = `
                             <div class="notification-icon"><i class="${icon}"></i></div>
@@ -3910,6 +4499,41 @@ try {
                 });
         }
 
+        // Fonction pour charger le classement des contributeurs
+        function loadLeaderboard() {
+            leaderboardList.innerHTML = '<p>Chargement du classement...</p>';
+            
+            db.collection('users')
+                .orderBy('examsUploaded', 'desc')
+                .limit(10)
+                .get()
+                .then(querySnapshot => {
+                    leaderboardList.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        leaderboardList.innerHTML = '<p>Aucun utilisateur trouvé.</p>';
+                        return;
+                    }
+                    
+                    let rank = 1;
+                    querySnapshot.forEach(doc => {
+                        const user = doc.data();
+                        const listItem = document.createElement('li');
+                        listItem.className = 'leaderboard-item';
+                        listItem.innerHTML = `
+                            <div class="leaderboard-user">${user.prenom} ${user.nom}</div>
+                            <div class="leaderboard-stats">${user.examsUploaded || 0} épreuves partagées</div>
+                        `;
+                        leaderboardList.appendChild(listItem);
+                        rank++;
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement du classement:', error);
+                    leaderboardList.innerHTML = '<p>Erreur lors du chargement du classement.</p>';
+                });
+        }
+
         function performGlobalSearch(query) {
             if (!query || query.length < 2) {
                 searchResults.innerHTML = '<p>Entrez au moins 2 caractères pour rechercher</p>';
@@ -4020,6 +4644,7 @@ try {
                 
             updatePendingExamsCount();
             loadPendingExams();
+            loadRequestedExams();
             renderAdminCharts();
         }
         
@@ -4066,6 +4691,47 @@ try {
                 .catch(error => {
                     console.error('Erreur lors du chargement des épreuves en attente:', error);
                     pendingExamsContainer.innerHTML = '<p>Erreur lors du chargement des épreuves en attente.</p>';
+                });
+        }
+        
+        // Fonction pour charger les épreuves demandées
+        function loadRequestedExams() {
+            const requestedExamsContainer = document.getElementById('requested-exams-list');
+            requestedExamsContainer.innerHTML = '<p>Chargement des épreuves demandées...</p>';
+            
+            db.collection('requests')
+                .where('status', '==', 'pending')
+                .orderBy('createdAt', 'desc')
+                .get()
+                .then(querySnapshot => {
+                    requestedExamsContainer.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        requestedExamsContainer.innerHTML = '<p>Aucune épreuve demandée.</p>';
+                        return;
+                    }
+                    
+                    querySnapshot.forEach(doc => {
+                        const request = doc.data();
+                        const requestElement = document.createElement('div');
+                        requestElement.className = 'request-item';
+                        requestElement.innerHTML = `
+                            <div class="request-header">
+                                <strong>${request.nom}</strong>
+                                <span class="request-date">${new Date(request.createdAt?.toDate()).toLocaleDateString('fr-FR')}</span>
+                            </div>
+                            <div class="request-details">
+                                <p>Matière: ${request.matiere} | Classe: ${request.classe}</p>
+                                <p>Demandé par: ${request.demandeurNom}</p>
+                            </div>
+                        `;
+                        
+                        requestedExamsContainer.appendChild(requestElement);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des épreuves demandées:', error);
+                    requestedExamsContainer.innerHTML = '<p>Erreur lors du chargement des épreuves demandées.</p>';
                 });
         }
         
@@ -4246,40 +4912,6 @@ try {
                 }
             }
         }
-                // --- NOUVELLE FONCTION POUR LE CLASSEMENT ---
-function loadLeaderboard() {
-    const listContainer = document.getElementById('leaderboard-list');
-    if (!listContainer) return; // Sécurité
-    listContainer.innerHTML = '<li>Chargement du classement...</li>';
-
-    db.collection('users')
-        .orderBy('examsUploaded', 'desc') // Tri par le plus grand nombre
-        .limit(10) // On prend seulement le Top 10
-        .get()
-        .then(querySnapshot => {
-            listContainer.innerHTML = ''; // On vide la liste
-            if (querySnapshot.empty) {
-                listContainer.innerHTML = '<li>Aucun contributeur trouvé.</li>';
-                return;
-            }
-
-            let rank = 1;
-            querySnapshot.forEach(doc => {
-                const user = doc.data();
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <strong>${user.prenom} ${user.nom}</strong> - ${user.examsUploaded || 0} épreuve(s)
-                `;
-                listContainer.appendChild(listItem);
-                rank++;
-            });
-        })
-        .catch(error => {
-            console.error('Erreur chargement classement:', error);
-            listContainer.innerHTML = '<li>Erreur lors du chargement du classement.</li>';
-        });
-}
-// --- FIN DE LA FONCTION CLASSEMENT ---
 
         function approveExam(examId, authorId, points) {
             db.collection('epreuves').doc(examId).update({
